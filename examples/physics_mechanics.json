@@ -1,0 +1,70 @@
+[
+  {
+    "id": 1,
+    "type": "MCQ",
+    "subject": "Physics - Newtonian Mechanics",
+    "difficulty": "Easy",
+    "question": "A body of mass $m = 5\\text{ kg}$ is acted upon by a net force of $F = 20\\text{ N}$. What is its acceleration?",
+    "options": [
+      { "id": "A", "text": "$a = 0.25\\text{ m/s}^2$" },
+      { "id": "B", "text": "$a = 4\\text{ m/s}^2$" },
+      { "id": "C", "text": "$a = 100\\text{ m/s}^2$" },
+      { "id": "D", "text": "$a = 15\\text{ m/s}^2$" }
+    ],
+    "correctAnswer": "B",
+    "solution": "From Newton's second law: $F = ma \\Rightarrow a = \\frac{F}{m} = \\frac{20}{5} = 4\\text{ m/s}^2$."
+  },
+  {
+    "id": 2,
+    "type": "MCQ",
+    "subject": "Physics - Kinematics",
+    "difficulty": "Medium",
+    "question": "A projectile is launched horizontally from a height of $h = 45\\text{ m}$ with velocity $v_0 = 15\\text{ m/s}$. How far from the base of the launch point does it land? (Take $g = 10\\text{ m/s}^2$)",
+    "options": [
+      { "id": "A", "text": "$30\\text{ m}$" },
+      { "id": "B", "text": "$45\\text{ m}$" },
+      { "id": "C", "text": "$60\\text{ m}$" },
+      { "id": "D", "text": "$90\\text{ m}$" }
+    ],
+    "correctAnswer": "B",
+    "solution": "<b>Step 1 — Time of flight:</b><br>$h = \\frac{1}{2}gt^2 \\Rightarrow t = \\sqrt{\\frac{2h}{g}} = \\sqrt{\\frac{90}{10}} = 3\\text{ s}$<br><b>Step 2 — Horizontal distance:</b><br>$x = v_0 t = 15 \\times 3 = 45\\text{ m}$"
+  },
+  {
+    "id": 3,
+    "type": "MCQ",
+    "subject": "Physics - Energy & Work",
+    "difficulty": "Medium",
+    "question": "A spring with constant $k = 200\\text{ N/m}$ is compressed by $x = 0.1\\text{ m}$. What is the elastic potential energy stored in the spring?",
+    "options": [
+      { "id": "A", "text": "$0.5\\text{ J}$" },
+      { "id": "B", "text": "$1\\text{ J}$" },
+      { "id": "C", "text": "$2\\text{ J}$" },
+      { "id": "D", "text": "$20\\text{ J}$" }
+    ],
+    "correctAnswer": "B",
+    "solution": "$E_p = \\frac{1}{2}kx^2 = \\frac{1}{2} \\times 200 \\times (0.1)^2 = 100 \\times 0.01 = 1\\text{ J}$"
+  },
+  {
+    "id": 4,
+    "type": "MCQ",
+    "subject": "Physics - Circular Motion",
+    "difficulty": "Hard",
+    "question": "A car of mass $m = 1000\\text{ kg}$ travels over a circular hill of radius $R = 50\\text{ m}$ at speed $v = 20\\text{ m/s}$. What is the normal force on the car at the top of the hill?",
+    "options": [
+      { "id": "A", "text": "$2000\\text{ N}$" },
+      { "id": "B", "text": "$8000\\text{ N}$" },
+      { "id": "C", "text": "$10000\\text{ N}$" },
+      { "id": "D", "text": "$18000\\text{ N}$" }
+    ],
+    "correctAnswer": "A",
+    "solution": "At the top of the hill, gravity and normal force provide the centripetal acceleration (pointing downward toward center):<br>$$mg - N = \\frac{mv^2}{R}$$<br>$$N = mg - \\frac{mv^2}{R} = m\\left(g - \\frac{v^2}{R}\\right) = 1000\\left(10 - \\frac{400}{50}\\right) = 1000(10 - 8) = 2000\\text{ N}$$"
+  },
+  {
+    "id": 5,
+    "type": "Open",
+    "subject": "Physics - Momentum & Collisions",
+    "difficulty": "Hard",
+    "question": "Two blocks slide toward each other on a frictionless surface. Block A has mass $m_A = 3\\text{ kg}$ and velocity $v_A = +4\\text{ m/s}$. Block B has mass $m_B = 2\\text{ kg}$ and velocity $v_B = -6\\text{ m/s}$.<br>(a) Find the total momentum of the system.<br>(b) After a perfectly inelastic collision, find the final velocity of the combined mass.<br>(c) Calculate the kinetic energy lost in the collision.",
+    "solution": "<b>(a) Total momentum:</b><br>$p = m_A v_A + m_B v_B = 3(4) + 2(-6) = 12 - 12 = 0\\text{ kg·m/s}$<br><br><b>(b) Final velocity after perfectly inelastic collision:</b><br>By conservation of momentum:<br>$p_f = (m_A + m_B)v_f = 0 \\Rightarrow v_f = 0\\text{ m/s}$<br>The combined mass is at rest.<br><br><b>(c) Kinetic energy lost:</b><br>$KE_i = \\frac{1}{2}(3)(4)^2 + \\frac{1}{2}(2)(6)^2 = 24 + 36 = 60\\text{ J}$<br>$KE_f = 0$<br>$\\Delta KE = 60\\text{ J}$ (all converted to heat/deformation)"
+  }
+]
