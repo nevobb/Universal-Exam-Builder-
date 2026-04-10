@@ -70,3 +70,55 @@ describe('splitLatex', () => {
     expect(result.every(s => s.content.length > 0)).toBe(true);
   });
 });
+
+import { parseViewerJson } from './ExamViewer.jsx';
+
+describe('parseViewerJson', () => {
+  it('returns ok:true and data for valid JSON array', () => {
+    const result = parseViewerJson(JSON.stringify([{ id: 1 }]));
+    expect(result.ok).toBe(true);
+    expect(result.data).toHaveLength(1);
+  });
+
+  it('strips ```json fences before parsing', () => {
+    const fenced = '```json\n[{"id":1}]\n```';
+    const result = parseViewerJson(fenced);
+    expect(result.ok).toBe(true);
+  });
+
+  it('strips plain ``` fences before parsing', () => {
+    const fenced = '```\n[{"id":1}]\n```';
+    const result = parseViewerJson(fenced);
+    expect(result.ok).toBe(true);
+  });
+
+  it('returns ok:false for malformed JSON', () => {
+    const result = parseViewerJson('{not json}');
+    expect(result.ok).toBe(false);
+    expect(result.error).toBeTruthy();
+  });
+
+  it('returns ok:false when JSON is an object not an array', () => {
+    const result = parseViewerJson('{"key":"value"}');
+    expect(result.ok).toBe(false);
+    expect(result.error).toContain('מערך');
+  });
+
+  it('returns ok:false for empty input', () => {
+    const result = parseViewerJson('');
+    expect(result.ok).toBe(false);
+  });
+
+  it('returns ok:false for empty array', () => {
+    const result = parseViewerJson('[]');
+    expect(result.ok).toBe(false);
+    expect(result.error).toContain('ריק');
+  });
+
+  it('preserves all question fields through parse', () => {
+    const q = { id: 1, type: 'OPEN', question: 'מהו?', solution: 'כך', python_drawer: null };
+    const result = parseViewerJson(JSON.stringify([q]));
+    expect(result.ok).toBe(true);
+    expect(result.data[0]).toMatchObject(q);
+  });
+});
