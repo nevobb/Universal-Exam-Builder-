@@ -14,7 +14,7 @@
  * @returns {{ type: string, content: string }[]}
  */
 export function splitLatex(str) {
-  if (!str) return [];
+  if (!str || typeof str !== 'string') return [];
 
   // Unescape double-backslashes produced by JSON double-encoding
   const unescaped = str.replace(/\\\\/g, '\\');
@@ -63,7 +63,7 @@ export function splitLatex(str) {
  */
 export function renderSegments(str) {
   const segs = splitLatex(str);
-  if (!window.katex) return segs;
+  if (typeof window === 'undefined' || !window.katex) return segs;
 
   return segs.map((seg) => {
     if (seg.type === 'text') return seg;
