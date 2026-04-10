@@ -533,13 +533,19 @@ function SettingsModal({ isOpen, onClose, theme, setTheme, preset, setPreset, on
 // ============================================================
 function ImportModal({ isOpen, onClose, onImport }) {
   const [text, setText] = useState('');
+
+  // Reset text when modal opens
+  useEffect(() => {
+    if (isOpen) setText('');
+  }, [isOpen]);
+
   if (!isOpen) return null;
   return (
     <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '20px', backdropFilter: 'blur(4px)' }}>
       <div style={{ backgroundColor: TOKENS.colors.white, borderRadius: TOKENS.radius.card, width: '95%', maxWidth: '640px', padding: '32px', display: 'flex', flexDirection: 'column', gap: '20px', boxShadow: TOKENS.shadows.lg }}>
         <h2 style={{ margin: 0, fontSize: '24px', fontWeight: '900' }}>הדבקת קוד מבחן (JSON)</h2>
         <p style={{ color: TOKENS.colors.textSecondary, fontSize: '15px' }}>הדביקו כאן את ה-JSON שנוצר על ידי הסייען האקדמי שלכם.</p>
-        <textarea autoFocus value={text} onChange={(e) => setText(e.target.value)} placeholder='[ { "id": 1, ... } ]' style={{ width: '100%', height: '300px', padding: '16px', borderRadius: TOKENS.radius.lg, border: `2px solid ${TOKENS.colors.border}`, backgroundColor: TOKENS.colors.surface, fontFamily: 'monospace', fontSize: '14px', resize: 'none' }} />
+        <textarea autoFocus value={text} onChange={(e) => setText(e.target.value)} placeholder='[ { "id": 1, ... } ]' style={{ width: '100%', height: '300px', padding: '16px', borderRadius: TOKENS.radius.lg, border: `2px solid ${TOKENS.colors.border}`, backgroundColor: TOKENS.colors.surface, fontFamily: 'monospace', fontSize: '14px', resize: 'none', boxSizing: 'border-box' }} />
         <div style={{ display: 'flex', gap: '16px', justifyContent: 'flex-end' }}>
           <button onClick={onClose} style={{ background: 'none', border: 'none', fontWeight: '800', cursor: 'pointer', color: TOKENS.colors.textSecondary }}>ביטול</button>
           <button onClick={() => { onImport(text); onClose(); }} disabled={!text.trim()} style={{ padding: '12px 32px', borderRadius: TOKENS.radius.btn, border: 'none', backgroundColor: text.trim() ? TOKENS.colors.primary : TOKENS.colors.border, color: 'white', fontWeight: '900', cursor: 'pointer', boxShadow: TOKENS.shadows.md }}>טען מבחן</button>
@@ -554,48 +560,62 @@ function ImportModal({ isOpen, onClose, onImport }) {
 // ============================================================
 function MCQQuestion({ question, userAnswer, onAnswer, mode }) {
   const isPractice = mode === 'practice';
+  const hasSvg = !!question.svg;
+
   return (
-    <div>
-      <div style={{ fontSize: '20px', color: TOKENS.colors.text, lineHeight: '1.6', marginBottom: '32px', textAlign: 'right', fontWeight: '700' }}>
-        <MixedContent text={question.question} />
+    <div style={{ display: 'grid', gridTemplateColumns: hasSvg ? 'repeat(auto-fit, minmax(350px, 1fr))' : '1fr', gap: '40px', alignItems: 'start' }}>
+      <div style={{ order: 1 }}>
+        <div style={{ fontSize: '20px', color: TOKENS.colors.text, lineHeight: '1.6', marginBottom: '32px', textAlign: 'right', fontWeight: '700' }}>
+          <MixedContent text={question.question} />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: TOKENS.spacing.md }}>
+          {question.options.map((option) => {
+            const isSelected = userAnswer === option.id;
+            const isCorrect = option.id === question.correctAnswer;
+            const isLocked = isPractice && !!userAnswer;
+            let bgColor = TOKENS.colors.white, borderColor = TOKENS.colors.border;
+            if (isPractice && userAnswer) {
+              if (isSelected && isCorrect) { bgColor = TOKENS.colors.successLight; borderColor = TOKENS.colors.success; }
+              else if (isSelected && !isCorrect) { bgColor = TOKENS.colors.errorLight; borderColor = TOKENS.colors.error; }
+              else if (!isSelected && isCorrect) { bgColor = TOKENS.colors.successLight; borderColor = TOKENS.colors.success; }
+            } else if (isSelected) {
+              bgColor = TOKENS.colors.primaryLight; borderColor = TOKENS.colors.primary;
+            }
+            return (
+              <button key={option.id} disabled={isLocked} onClick={() => onAnswer(option.id)} style={{ display: 'flex', padding: '20px 24px', backgroundColor: bgColor, border: `2px solid ${borderColor}`, borderRadius: TOKENS.radius.lg, cursor: isLocked ? 'default' : 'pointer', textAlign: 'right', gap: '16px', transition: 'all 0.2s', fontSize: '17px', color: TOKENS.colors.text }} onMouseOver={e => !isLocked && !isSelected && (e.currentTarget.style.borderColor = TOKENS.colors.primary)} onMouseOut={e => !isLocked && !isSelected && (e.currentTarget.style.borderColor = TOKENS.colors.border)}>
+                <span style={{ fontWeight: '950', color: TOKENS.colors.primary, minWidth: '24px' }}>{option.id}.</span>
+                <MixedContent text={option.text} />
+              </button>
+            );
+          })}
+        </div>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: TOKENS.spacing.md }}>
-        {question.options.map((option) => {
-          const isSelected = userAnswer === option.id;
-          const isCorrect = option.id === question.correctAnswer;
-          const isLocked = isPractice && !!userAnswer;
-          let bgColor = TOKENS.colors.white, borderColor = TOKENS.colors.border;
-          if (isPractice && userAnswer) {
-            if (isSelected && isCorrect) { bgColor = TOKENS.colors.successLight; borderColor = TOKENS.colors.success; }
-            else if (isSelected && !isCorrect) { bgColor = TOKENS.colors.errorLight; borderColor = TOKENS.colors.error; }
-            else if (!isSelected && isCorrect) { bgColor = TOKENS.colors.successLight; borderColor = TOKENS.colors.success; }
-          } else if (isSelected) {
-            bgColor = TOKENS.colors.primaryLight; borderColor = TOKENS.colors.primary;
-          }
-          return (
-            <button key={option.id} disabled={isLocked} onClick={() => onAnswer(option.id)} style={{ display: 'flex', padding: '20px 24px', backgroundColor: bgColor, border: `2px solid ${borderColor}`, borderRadius: TOKENS.radius.lg, cursor: isLocked ? 'default' : 'pointer', textAlign: 'right', gap: '16px', transition: 'all 0.2s', fontSize: '17px', color: TOKENS.colors.text }} onMouseOver={e => !isLocked && !isSelected && (e.currentTarget.style.borderColor = TOKENS.colors.primary)} onMouseOut={e => !isLocked && !isSelected && (e.currentTarget.style.borderColor = TOKENS.colors.border)}>
-              <span style={{ fontWeight: '950', color: TOKENS.colors.primary, minWidth: '24px' }}>{option.id}.</span>
-              <MixedContent text={option.text} />
-            </button>
-          );
-        })}
-      </div>
+      {hasSvg && (
+        <div style={{ order: 2, padding: '24px', backgroundColor: TOKENS.colors.white, borderRadius: TOKENS.radius.lg, border: `1px solid ${TOKENS.colors.border}`, textAlign: 'center', alignSelf: 'start', boxShadow: TOKENS.shadows.sm }}>
+          <div dangerouslySetInnerHTML={{ __html: question.svg }} />
+        </div>
+      )}
     </div>
   );
 }
 
 function OpenQuestion({ question, mode, showSolution, onToggleSolution }) {
+  const hasSvg = !!question.svg;
+
   return (
     <div>
-      <div style={{ fontSize: '20px', color: TOKENS.colors.text, lineHeight: '1.8', marginBottom: '32px', textAlign: 'right', fontWeight: '700' }}>
-        <MixedContent text={question.question} />
-      </div>
-      {question.svg && (
-        <div style={{ textAlign: 'center', marginBottom: '32px', padding: '24px', backgroundColor: TOKENS.colors.white, borderRadius: TOKENS.radius.lg, border: `1px solid ${TOKENS.colors.border}` }}>
-          <div dangerouslySetInnerHTML={{ __html: question.svg }} />
+      <div style={{ display: 'grid', gridTemplateColumns: hasSvg ? 'repeat(auto-fit, minmax(350px, 1fr))' : '1fr', gap: '40px', alignItems: 'start', marginBottom: '32px' }}>
+        <div style={{ order: 1, fontSize: '20px', color: TOKENS.colors.text, lineHeight: '1.8', textAlign: 'right', fontWeight: '700' }}>
+          <MixedContent text={question.question} />
         </div>
-      )}
-      {(mode === 'practice' || showSolution) && (
+        {hasSvg && (
+          <div style={{ order: 2, padding: '24px', backgroundColor: TOKENS.colors.white, borderRadius: TOKENS.radius.lg, border: `1px solid ${TOKENS.colors.border}`, textAlign: 'center', boxShadow: TOKENS.shadows.sm }}>
+            <div dangerouslySetInnerHTML={{ __html: question.svg }} />
+          </div>
+        )}
+      </div>
+
+      {showSolution && (
         <div style={{ padding: '32px', backgroundColor: TOKENS.colors.successLight, borderRadius: TOKENS.radius.lg, border: `2px solid ${TOKENS.colors.success}`, marginTop: '24px' }}>
           <h4 style={{ margin: '0 0 16px 0', color: TOKENS.colors.success, fontWeight: '900', fontSize: '18px' }}>פתרון מודרך</h4>
           <div style={{ fontSize: '17px', lineHeight: '1.8' }}>
@@ -603,7 +623,7 @@ function OpenQuestion({ question, mode, showSolution, onToggleSolution }) {
           </div>
         </div>
       )}
-      {!showSolution && mode !== 'practice' && (
+      {!showSolution && (
         <button onClick={onToggleSolution} style={{ width: '100%', padding: '20px', backgroundColor: TOKENS.colors.surface, border: `2px dashed ${TOKENS.colors.primary}`, color: TOKENS.colors.primary, borderRadius: TOKENS.radius.lg, cursor: 'pointer', fontWeight: '800', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
            צפה בפתרון המלא
         </button>
