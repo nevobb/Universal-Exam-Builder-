@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
+import ExamViewer from './src/viewer/ExamViewer.jsx';
 
 // ============================================================
 // DESIGN SYSTEM & THEMING (PRO MAX)
@@ -406,7 +407,7 @@ function PortalCard({ icon, title, desc, onClick }) {
 // ============================================================
 // COMPONENT: AppHeader
 // ============================================================
-function AppHeader({ onToggleSidebar, onOpenSettings, onPromptArchitect, onHome, currentTitle, showHome }) {
+function AppHeader({ onToggleSidebar, onOpenSettings, onPromptArchitect, onViewerOpen, onHome, currentTitle, showHome }) {
   return (
     <header className="no-print app-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 40px', backgroundColor: TOKENS.colors.white, borderBottom: `1px solid ${TOKENS.colors.border}`, position: 'sticky', top: 0, zIndex: 100, boxShadow: TOKENS.shadows.sm, backdropFilter: 'blur(10px)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: TOKENS.spacing.lg }}>
@@ -421,6 +422,15 @@ function AppHeader({ onToggleSidebar, onOpenSettings, onPromptArchitect, onHome,
             <Icons.Home />
           </button>
         )}
+        <button
+          title="צפייה במבחן"
+          onClick={onViewerOpen}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: TOKENS.colors.primary, padding: '8px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}
+          onMouseOver={e => e.currentTarget.style.backgroundColor = TOKENS.colors.primaryLight}
+          onMouseOut={e => e.currentTarget.style.backgroundColor = 'transparent'}
+        >
+          📋
+        </button>
         <button title="מחולל פרומפטים" onClick={onPromptArchitect} style={{ background: 'none', border: 'none', cursor: 'pointer', color: TOKENS.colors.primary, padding: '8px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }} onMouseOver={e => e.currentTarget.style.backgroundColor = TOKENS.colors.primaryLight} onMouseOut={e => e.currentTarget.style.backgroundColor = 'transparent'}>
           <Icons.Sparkles />
         </button>
@@ -930,6 +940,7 @@ function Layout({
   handleExportData, handleImportData, handleClearData,
   handleLoadCustomJSON,
   onPromptArchitect,
+  onViewerOpen,
 }) {
   return (
     <div style={{ backgroundColor: TOKENS.colors.surface, minHeight: '100vh', fontFamily: 'var(--font-body)', direction: 'rtl' }}>
@@ -937,6 +948,7 @@ function Layout({
       <AppHeader
         onOpenSettings={() => setIsSettingsOpen(true)}
         onPromptArchitect={onPromptArchitect}
+        onViewerOpen={onViewerOpen}
         onHome={() => setMode('welcome')}
         showHome={mode && mode !== 'welcome'}
         currentTitle={mode && mode !== 'welcome' ? examTitle : null}
@@ -1048,6 +1060,17 @@ export default function App() {
       } catch (e) { console.error('Failed to load shared exam', e); }
     }
   }, []);
+  useEffect(() => {
+    const handleMessage = (event) => {
+      if (event.data && event.data.type === 'GEMINI_EXAM_INJECT') {
+        const payload = event.data.payload;
+        const jsonStr = typeof payload === 'string' ? payload : JSON.stringify(payload);
+        handleLoadCustomJSON(jsonStr);
+      }
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
 
   const handleLoadCustomJSON = (json) => {
     try {
@@ -1068,11 +1091,14 @@ export default function App() {
         date: new Date().toLocaleDateString('he-IL'),
         questions: data
       };
-      const newHistory = [newEntry, ...history.slice(0, 49)];
-      setHistory(newHistory);
-      safeSetHistory(newHistory);
+      setHistory(prev => {
+        const updated = [newEntry, ...prev.slice(0, 49)];
+        safeSetHistory(updated);
+        return updated;
+      });
     } catch (e) { alert('Invalid JSON format'); }
   };
+
 
   const handleLoadFromHistory = (entry) => {
     setDynamicQuestions(entry.questions);
@@ -1167,7 +1193,16 @@ export default function App() {
     handleExportData, handleImportData, handleClearData,
     handleLoadCustomJSON,
     onPromptArchitect: () => setMode('prompt-architect'),
+    onViewerOpen: () => setMode('viewer'),
   };
+
+  if (mode === 'viewer') {
+    return (
+      <Layout {...layoutProps}>
+        <ExamViewer sharedData={dynamicQuestions.length > 0 ? dynamicQuestions : null} />
+      </Layout>
+    );
+  }
 
   if (mode === 'prompt-architect') {
     return (
