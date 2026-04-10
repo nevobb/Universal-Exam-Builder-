@@ -6,6 +6,19 @@
 
 (function() {
     console.log("🚀 TestBuilder Extension v2.4.0-DEBUG Active");
+    // Trusted Types Monitor — catches the exact string and sink causing violations
+    if (window.trustedTypes && window.trustedTypes.createPolicy) {
+        try {
+            if (!window.trustedTypes.defaultPolicy) {
+                window.trustedTypes.createPolicy('default', {
+                    createHTML: (s) => { console.warn("⚠️ TrustedHTML Violation attempted with:", s); return s; },
+                    createScript: (s) => { console.warn("⚠️ TrustedScript Violation attempted with:", s); return s; }
+                });
+            }
+        } catch (e) {
+            console.error("❌ Gemini CSP blocked Policy creation. We must find the sink manually.", e);
+        }
+    }
     const bridgeEventName = '__GEMINI_DATA_DETECTED__';
     const btnClass = 'testbuilder-bridge-btn-v2';
     const toastId = 'testbuilder-magic-toast';
