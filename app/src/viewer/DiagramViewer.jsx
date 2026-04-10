@@ -26,8 +26,11 @@ export default function DiagramViewer({ script, pyodide, status }) {
 
     pyodide.runPythonAsync(script)
       .then((result) => {
-        const svgString = typeof result === 'string' ? result : String(result);
-        setSvg(svgString);
+        const raw = typeof result === 'string' ? result : String(result);
+        const clean = window.DOMPurify
+          ? window.DOMPurify.sanitize(raw, { USE_PROFILES: { svg: true } })
+          : raw;
+        setSvg(clean);
       })
       .catch((err) => {
         setRunError(err.message || String(err));

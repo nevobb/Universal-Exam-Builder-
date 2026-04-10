@@ -59,7 +59,12 @@ export default function ExamViewer({ sharedData }) {
       return;
     }
     const winData = window.__GEMINI_EXAM_DATA__;
-    if (winData && Array.isArray(winData) && winData.length > 0) {
+    if (
+      winData &&
+      Array.isArray(winData) &&
+      winData.length > 0 &&
+      ['id', 'question', 'solution'].every((k) => k in winData[0])
+    ) {
       setQuestions(winData);
     }
   }, [sharedData, questions]);

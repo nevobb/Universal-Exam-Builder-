@@ -107,6 +107,11 @@ const THEME_CSS = `
     .two-col-grid { grid-template-columns: 1fr !important; }
     .action-buttons { flex-direction: column !important; align-items: stretch !important; }
   }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
 `;
 
 const Icons = {
