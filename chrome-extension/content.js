@@ -6,19 +6,9 @@
 
 (function() {
     console.log("🚀 TestBuilder Extension v2.4.0-DEBUG Active");
-    // Trusted Types Monitor — catches the exact string and sink causing violations
-    if (window.trustedTypes && window.trustedTypes.createPolicy) {
-        try {
-            if (!window.trustedTypes.defaultPolicy) {
-                window.trustedTypes.createPolicy('default', {
-                    createHTML: (s) => { console.warn("⚠️ TrustedHTML Violation attempted with:", s); return s; },
-                    createScript: (s) => { console.warn("⚠️ TrustedScript Violation attempted with:", s); return s; }
-                });
-            }
-        } catch (e) {
-            console.error("❌ Gemini CSP blocked Policy creation. We must find the sink manually.", e);
-        }
-    }
+    // NOTE: TrustedTypes violation monitoring runs in interceptor.js (MAIN world).
+    // This ISOLATED world context has its own JS realm — a defaultPolicy set here
+    // cannot intercept violations from Gemini's page code. No policy needed here.
     const bridgeEventName = '__GEMINI_DATA_DETECTED__';
     const btnClass = 'testbuilder-bridge-btn-v2';
     const toastId = 'testbuilder-magic-toast';
