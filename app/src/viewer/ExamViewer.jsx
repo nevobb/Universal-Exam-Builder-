@@ -2,13 +2,31 @@ import React, { useState, useEffect, useRef } from 'react';
 import { usePyodide } from './usePyodide.js';
 import QuestionCard from './QuestionCard.jsx';
 
-// Pyodide CDN script injection (idempotent)
+// Pyodide CDN script injection (idempotent). Returns a promise that resolves
+// when window.loadPyodide is available.
+let _scriptPromise = null;
 function ensurePyodideScript() {
-  if (document.getElementById('pyodide-cdn')) return;
-  const s = document.createElement('script');
-  s.id = 'pyodide-cdn';
-  s.src = 'https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js';
-  document.head.appendChild(s);
+  if (_scriptPromise) return _scriptPromise;
+  const existing = document.getElementById('pyodide-cdn');
+  if (existing) {
+    // Script tag already present — wait for window.loadPyodide to be defined
+    _scriptPromise = new Promise((resolve) => {
+      if (typeof window.loadPyodide === 'function') { resolve(); return; }
+      const check = setInterval(() => {
+        if (typeof window.loadPyodide === 'function') { clearInterval(check); resolve(); }
+      }, 50);
+    });
+    return _scriptPromise;
+  }
+  _scriptPromise = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.id = 'pyodide-cdn';
+    s.src = 'https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js';
+    s.onload = resolve;
+    s.onerror = () => reject(new Error('Failed to load Pyodide CDN script'));
+    document.head.appendChild(s);
+  });
+  return _scriptPromise;
 }
 
 /**
@@ -45,10 +63,11 @@ export default function ExamViewer({ sharedData }) {
   const [parseError, setParseError] = useState(null);
   const fileRef = useRef(null);
 
-  // Kick off lazy Pyodide load and inject CDN script on first render
+  // Kick off lazy Pyodide load — wait for CDN script before calling init()
   useEffect(() => {
-    ensurePyodideScript();
-    init();
+    ensurePyodideScript().then(init).catch(() => {
+      // Script load failure is surfaced by init() itself via status='error'
+    });
   }, [init]);
 
   // Auto-load from prop or window injection
