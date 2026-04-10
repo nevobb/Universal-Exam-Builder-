@@ -628,10 +628,13 @@ function QuestionScreen({ questions, mode, examTimeLeft, currentIdx, userAnswers
           </div>
         )}
       </div>
-      <div style={{ height: '4px', backgroundColor: TOKENS.colors.border, borderRadius: '2px', marginBottom: '32px', overflow: 'hidden' }}>
-        <div style={{ height: '100%', backgroundColor: TOKENS.colors.primary, borderRadius: '2px', width: `${((currentIdx + 1) / questions.length) * 100}%`, transition: 'width 0.3s ease' }} />
+      <div style={{ position: 'relative', height: '8px', backgroundColor: TOKENS.colors.border, borderRadius: '4px', marginBottom: '40px', overflow: 'hidden', boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.1)' }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, height: '100%', backgroundColor: TOKENS.colors.primary, borderRadius: '4px', width: `${((currentIdx + 1) / questions.length) * 100}%`, transition: 'width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)', boxShadow: '0 0 10px rgba(79, 70, 229, 0.4)' }} />
       </div>
-      <div className="question-card" style={{ backgroundColor: TOKENS.colors.white, padding: '48px', borderRadius: TOKENS.radius.card, boxShadow: TOKENS.shadows.card, marginBottom: '40px' }}>
+      <div className="question-card" style={{ backgroundColor: TOKENS.colors.white, padding: '48px', borderRadius: TOKENS.radius.card, boxShadow: TOKENS.shadows.card, marginBottom: '40px', border: `1px solid ${TOKENS.colors.border}`, position: 'relative' }}>
+        {userAnswers[q.id] && mode === 'practice' && (
+          <div style={{ position: 'absolute', top: '-12px', left: '24px', backgroundColor: TOKENS.colors.success, color: 'white', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '900', boxShadow: TOKENS.shadows.sm }}>נפתר</div>
+        )}
         {q.type === 'MCQ' ? <MCQQuestion question={q} userAnswer={userAnswers[q.id]} onAnswer={onAnswer} mode={mode} /> : <OpenQuestion question={q} mode={mode} showSolution={showSolution} onToggleSolution={onToggleSolution} />}
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: '20px' }}>
@@ -693,12 +696,14 @@ function SummaryScreen({ questions, userAnswers, mode, expandedItems, onToggleIt
           <div key={q.id} className="content-card" style={{ border: `1px solid ${TOKENS.colors.border}`, borderRadius: TOKENS.radius.lg, overflow: 'hidden', backgroundColor: TOKENS.colors.white }}>
             <div onClick={() => onToggleItem(idx)} style={{ padding: '20px 24px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: headerBg, transition: 'background 0.2s' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                {q.type === 'MCQ' && (
-                  <div style={{ width: '26px', height: '26px', borderRadius: '50%', backgroundColor: isCorrect ? TOKENS.colors.success : TOKENS.colors.error, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    {isCorrect ? <Icons.Check width={14} height={14} style={{ color: 'white' }} /> : <Icons.Close width={14} height={14} style={{ color: 'white' }} />}
-                  </div>
-                )}
-                <span style={{ fontWeight: '800', fontSize: '17px' }}>שאלה {idx + 1}: {q.subject}</span>
+                <div style={{ width: '28px', height: '28px', borderRadius: '8px', backgroundColor: q.type === 'MCQ' ? (isCorrect ? TOKENS.colors.success : TOKENS.colors.error) : TOKENS.colors.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: TOKENS.shadows.sm }}>
+                  {q.type === 'MCQ' ? (
+                    isCorrect ? <Icons.Check width={16} height={16} style={{ color: 'white' }} /> : <Icons.Close width={16} height={16} style={{ color: 'white' }} />
+                  ) : (
+                    <Icons.Academic width={16} height={16} style={{ color: 'white' }} />
+                  )}
+                </div>
+                <span style={{ fontWeight: '800', fontSize: '17px', color: TOKENS.colors.text }}>שאלה {idx + 1}: {q.subject}</span>
               </div>
               <div style={{ color: TOKENS.colors.textSecondary }}>
                 {expandedItems[idx] ? <Icons.Close /> : <Icons.ChevronForward style={{ transform: 'rotate(90deg)' }} />}
@@ -928,6 +933,9 @@ function Layout({
       />
       <ImportModal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} onImport={handleLoadCustomJSON} />
       <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '40px 24px' }}>{children}</div>
+      <footer className="no-print" style={{ textAlign: 'center', padding: '40px', color: TOKENS.colors.textSecondary, fontSize: '12px', opacity: 0.6 }}>
+        Universal Exam Builder v3.1.5-PRO • Phase 3 Release
+      </footer>
     </div>
   );
 }
@@ -1119,7 +1127,13 @@ export default function App() {
     }
   }, [mode, examTimeLeft, isFinished]);
 
-  if (!katexLoaded || !purifyLoaded) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', fontFamily: 'Rubik, sans-serif' }}>Loading...</div>;
+  if (!katexLoaded || !purifyLoaded) return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: '20px', fontFamily: 'var(--font-heading)', background: TOKENS.colors.surface }}>
+      <div style={{ width: '40px', height: '40px', border: `4px solid ${TOKENS.colors.primaryLight}`, borderTop: `4px solid ${TOKENS.colors.primary}`, borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+      <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+      <div style={{ fontWeight: '800', color: TOKENS.colors.primary }}>מכין את הסביבה האקדמית...</div>
+    </div>
+  );
 
   const examTitle = dynamicQuestions[0]?.subject || 'Universal Exam Builder';
 
