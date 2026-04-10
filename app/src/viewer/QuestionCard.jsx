@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import DiagramViewer from './DiagramViewer.jsx';
 import { renderSegments } from './renderLatex.js';
 
@@ -24,23 +24,34 @@ function LatexText({ str }) {
         if (seg.type === 'text') {
           return <span key={i}>{seg.content}</span>;
         }
-        if (seg.html) {
-          return (
-            <span
-              key={i}
-              style={{ direction: 'ltr', display: 'inline-block' }}
-              dangerouslySetInnerHTML={{ __html: seg.html }}
-            />
-          );
-        }
-        // Fallback: KaTeX not yet loaded
-        return (
-          <span key={i} style={{ direction: 'ltr', display: 'inline-block', fontStyle: 'italic' }}>
-            {seg.content}
-          </span>
-        );
+        // Use a safe wrapper component for math
+        return <MathSpan key={i} html={seg.html} content={seg.content} />;
       })}
     </>
+  );
+}
+
+function MathSpan({ html, content }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    if (ref.current && html) {
+      // Clear and append safely
+      while (ref.current.firstChild) ref.current.removeChild(ref.current.firstChild);
+      
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, "text/html");
+      const nodes = Array.from(doc.body.childNodes);
+      nodes.forEach(node => ref.current.appendChild(document.importNode(node, true)));
+    }
+  }, [html]);
+
+  return (
+    <span
+      ref={ref}
+      style={{ direction: 'ltr', display: 'inline-block' }}
+    >
+      {!html && content}
+    </span>
   );
 }
 

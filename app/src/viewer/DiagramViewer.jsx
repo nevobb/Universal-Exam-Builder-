@@ -13,11 +13,13 @@ export default function DiagramViewer({ script, pyodide, status }) {
   const [runError, setRunError] = useState(null);
   const [running, setRunning] = useState(false);
   const prevScript = useRef(null);
+  const svgContainerRef = useRef(null);
 
+  // Run Python script and capture SVG result
   useEffect(() => {
     if (!script) return;
     if (status !== 'ready' || !pyodide) return;
-    if (script === prevScript.current) return; // Skip re-run if script unchanged
+    if (script === prevScript.current) return;
 
     prevScript.current = script;
     setRunning(true);
@@ -39,6 +41,21 @@ export default function DiagramViewer({ script, pyodide, status }) {
         setRunning(false);
       });
   }, [script, pyodide, status]);
+
+  // Inject SVG into DOM safely via DOMParser (avoids dangerouslySetInnerHTML)
+  useEffect(() => {
+    if (!svgContainerRef.current || !svg) return;
+    while (svgContainerRef.current.firstChild) {
+      svgContainerRef.current.removeChild(svgContainerRef.current.firstChild);
+    }
+    try {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(svg, 'image/svg+xml');
+      svgContainerRef.current.appendChild(document.importNode(doc.documentElement, true));
+    } catch {
+      svgContainerRef.current.textContent = 'Error rendering SVG';
+    }
+  }, [svg]);
 
   if (!script) return null;
 
@@ -91,8 +108,8 @@ export default function DiagramViewer({ script, pyodide, status }) {
 
   return (
     <div
+      ref={svgContainerRef}
       style={{ margin: '16px 0', overflowX: 'auto', direction: 'ltr' }}
-      dangerouslySetInnerHTML={{ __html: svg }}
     />
   );
 }

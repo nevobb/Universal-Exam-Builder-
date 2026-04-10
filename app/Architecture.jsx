@@ -2,117 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
 import ExamViewer from './src/viewer/ExamViewer.jsx';
 
-// ============================================================
-// DESIGN SYSTEM & THEMING (PRO MAX)
-// ============================================================
-const THEME_CSS = `
-  :root {
-    --color-primary: #4F46E5;
-    --color-primary-light: #EEF2FF;
-    --color-success: #059669;
-    --color-success-light: #ECFDF5;
-    --color-error: #E11D48;
-    --color-error-light: #FFF1F2;
-    --color-text: #0F172A;
-    --color-text-secondary: #475569; 
-    --color-surface: #F8FAFC;
-    --color-white: #FFFFFF;
-    --color-border: #E2E8F0;
-    --color-accent: #8B5CF6;
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    
-    /* Preset Defaults (Academic) */
-    --radius-card: 16px;
-    --radius-button: 10px;
-    --font-heading: 'Outfit', 'Rubik', sans-serif;
-    --font-body: 'Inter', 'Rubik', sans-serif;
-    --card-shadow: var(--shadow-md);
-  }
-
-  [data-preset='zen'] {
-    --color-primary: #10B981;
-    --color-primary-light: #F0FDF4;
-    --color-accent: #3B82F6;
-    --radius-card: 32px;
-    --radius-button: 999px;
-    --font-heading: 'Comfortaa', 'Rubik', sans-serif;
-    --card-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  }
-
-  [data-preset='pulse'] {
-    --color-primary: #E11D48;
-    --color-primary-light: #F8FAFC;
-    --color-accent: #0F172A;
-    --radius-card: 12px;
-    --radius-button: 8px;
-    --font-heading: 'Lexend', sans-serif;
-    --card-shadow: 0 4px 20px rgba(225, 29, 72, 0.1);
-  }
-
-  [data-theme='dark'] {
-    --color-primary: #6366F1;
-    --color-primary-light: #1E1B4B;
-    --color-success: #10B981;
-    --color-success-light: #064E3B;
-    --color-error: #F43F5E;
-    --color-error-light: #4C0519;
-    --color-text: #F8FAFC;
-    --color-text-secondary: #CBD5E1;
-    --color-surface: #0F172A;
-    --color-white: #1E293B;
-    --color-border: #334155;
-    --color-accent: #A78BFA;
-  }
-
-  [data-theme='dark'][data-preset='zen'] {
-    --color-primary: #34D399;
-    --color-primary-light: #064E3B;
-  }
-
-  body {
-    background-color: var(--color-surface);
-    color: var(--color-text);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    margin: 0;
-    font-family: var(--font-body);
-    -webkit-font-smoothing: antialiased;
-  }
-
-  h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-heading);
-    letter-spacing: -0.02em;
-  }
-
-  @media print {
-    .no-print { display: none !important; }
-    body { background: white !important; color: black !important; }
-    .print-only { display: block !important; }
-    .page-break { page-break-after: always; }
-    header, footer, button, .sidebar, .modal { display: none !important; }
-    .content-card { box-shadow: none !important; border: 1px solid #eee !important; break-inside: avoid; }
-    h1, h2, h3 { color: black !important; }
-  }
-
-  @media (max-width: 1024px) {
-    .app-header { padding: 16px 24px !important; }
-    .question-card { padding: 36px !important; }
-  }
-
-  @media (max-width: 640px) {
-    .sidebar { width: 85vw !important; max-width: 340px !important; }
-    .app-header { padding: 12px 16px !important; }
-    .question-card { padding: 24px 16px !important; }
-    .two-col-grid { grid-template-columns: 1fr !important; }
-    .action-buttons { flex-direction: column !important; align-items: stretch !important; }
-  }
-
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-`;
+import './theme.css';
 
 const Icons = {
   Home: (props) => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
@@ -268,45 +158,7 @@ const LZString = {
   }
 };
 
-// ============================================================
-// GLOBAL STYLES
-// ============================================================
-function GlobalStyles() {
-  return <style dangerouslySetInnerHTML={{ __html: THEME_CSS }} />;
-}
-
-// ============================================================
-// HELPERS: Math Rendering
-// ============================================================
-function useKaTeXLoader() {
-  const [isLoaded, setIsLoaded] = useState(false);
-  useEffect(() => {
-    if (window.katex) { setIsLoaded(true); return; }
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = 'https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css';
-    document.head.appendChild(link);
-    const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js';
-    script.async = true;
-    script.onload = () => setIsLoaded(true);
-    document.head.appendChild(script);
-  }, []);
-  return isLoaded;
-}
-
-function useDOMPurifyLoader() {
-  const [isLoaded, setIsLoaded] = useState(false);
-  useEffect(() => {
-    if (window.DOMPurify) { setIsLoaded(true); return; }
-    const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js';
-    script.async = true;
-    script.onload = () => setIsLoaded(true);
-    document.head.appendChild(script);
-  }, []);
-  return isLoaded;
-}
+// Components now rely on static scripts in index.html
 
 function KaTeXSpan({ math, displayMode }) {
   const ref = useRef(null);
@@ -318,6 +170,23 @@ function KaTeXSpan({ math, displayMode }) {
     }
   }, [math, displayMode]);
   return <span ref={ref} style={{ direction: 'ltr', display: 'inline-block' }}>{math}</span>;
+}
+
+function SafeSvg({ svg }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    if (ref.current && svg) {
+      while (ref.current.firstChild) ref.current.removeChild(ref.current.firstChild);
+      try {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(svg, "image/svg+xml");
+        ref.current.appendChild(document.importNode(doc.documentElement, true));
+      } catch (e) {
+        ref.current.textContent = "Error rendering SVG";
+      }
+    }
+  }, [svg]);
+  return <div ref={ref} />;
 }
 
 function parseParagraph(text, keyOffset) {
@@ -607,7 +476,7 @@ function MCQQuestion({ question, userAnswer, onAnswer, mode }) {
       </div>
       {hasSvg && (
         <div style={{ order: 2, padding: '24px', backgroundColor: TOKENS.colors.white, borderRadius: TOKENS.radius.lg, border: `1px solid ${TOKENS.colors.border}`, textAlign: 'center', alignSelf: 'start', boxShadow: TOKENS.shadows.sm }}>
-          <div dangerouslySetInnerHTML={{ __html: question.svg }} />
+          <SafeSvg svg={question.svg} />
         </div>
       )}
     </div>
@@ -625,7 +494,7 @@ function OpenQuestion({ question, mode, showSolution, onToggleSolution }) {
         </div>
         {hasSvg && (
           <div style={{ order: 2, padding: '24px', backgroundColor: TOKENS.colors.white, borderRadius: TOKENS.radius.lg, border: `1px solid ${TOKENS.colors.border}`, textAlign: 'center', boxShadow: TOKENS.shadows.sm }}>
-            <div dangerouslySetInnerHTML={{ __html: question.svg }} />
+            <SafeSvg svg={question.svg} />
           </div>
         )}
       </div>
@@ -838,7 +707,6 @@ ${special ? `דגשים נוספים: ${special}` : ''}
 
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto', animation: 'fadeIn 0.4s ease-out' }}>
-      <style dangerouslySetInnerHTML={{ __html: `@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }` }} />
       <div style={{ backgroundColor: TOKENS.colors.white, padding: '48px', borderRadius: TOKENS.radius.card, boxShadow: TOKENS.shadows.card }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '32px' }}>
           <div style={{ backgroundColor: TOKENS.colors.primaryLight, padding: '12px', borderRadius: '16px', color: TOKENS.colors.primary }}>
@@ -949,7 +817,6 @@ function Layout({
 }) {
   return (
     <div style={{ backgroundColor: TOKENS.colors.surface, minHeight: '100vh', fontFamily: 'var(--font-body)', direction: 'rtl' }}>
-      <GlobalStyles />
       <AppHeader
         onOpenSettings={() => setIsSettingsOpen(true)}
         onPromptArchitect={onPromptArchitect}
@@ -1038,8 +905,6 @@ export default function App() {
   const [examTimeLeft, setExamTimeLeft] = useState(null);
   const [expandedItems, setExpandedItems] = useState({});
 
-  const katexLoaded = useKaTeXLoader();
-  const purifyLoaded = useDOMPurifyLoader();
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -1178,13 +1043,6 @@ export default function App() {
     }
   }, [mode, examTimeLeft, isFinished]);
 
-  if (!katexLoaded || !purifyLoaded) return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: '20px', fontFamily: 'var(--font-heading)', background: TOKENS.colors.surface }}>
-      <div style={{ width: '40px', height: '40px', border: `4px solid ${TOKENS.colors.primaryLight}`, borderTop: `4px solid ${TOKENS.colors.primary}`, borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-      <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
-      <div style={{ fontWeight: '800', color: TOKENS.colors.primary }}>מכין את הסביבה האקדמית...</div>
-    </div>
-  );
 
   const examTitle = dynamicQuestions[0]?.subject || 'Universal Exam Builder';
 
