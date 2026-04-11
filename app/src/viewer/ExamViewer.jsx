@@ -4,17 +4,23 @@ import QuestionCard from './QuestionCard.jsx';
 
 // Pyodide CDN script injection (idempotent). Returns a promise that resolves
 // when window.loadPyodide is available.
+const PYODIDE_POLL_TIMEOUT_MS = 10000;
+
 let _scriptPromise = null;
 function ensurePyodideScript() {
   if (_scriptPromise) return _scriptPromise;
   const existing = document.getElementById('pyodide-cdn');
   if (existing) {
     // Script tag already present — wait for window.loadPyodide to be defined
-    _scriptPromise = new Promise((resolve) => {
+    _scriptPromise = new Promise((resolve, reject) => {
       if (typeof window.loadPyodide === 'function') { resolve(); return; }
       const check = setInterval(() => {
         if (typeof window.loadPyodide === 'function') { clearInterval(check); resolve(); }
       }, 50);
+      setTimeout(() => {
+        clearInterval(check);
+        reject(new Error('Failed to load Pyodide from CDN'));
+      }, PYODIDE_POLL_TIMEOUT_MS);
     });
     return _scriptPromise;
   }
@@ -76,15 +82,6 @@ export default function ExamViewer({ sharedData }) {
     if (sharedData && Array.isArray(sharedData) && sharedData.length > 0) {
       setQuestions(sharedData);
       return;
-    }
-    const winData = window.__GEMINI_EXAM_DATA__;
-    if (
-      winData &&
-      Array.isArray(winData) &&
-      winData.length > 0 &&
-      ['id', 'question', 'solution'].every((k) => k in winData[0])
-    ) {
-      setQuestions(winData);
     }
   }, [sharedData, questions]);
 

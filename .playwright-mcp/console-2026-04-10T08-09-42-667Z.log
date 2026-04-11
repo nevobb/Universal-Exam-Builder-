@@ -1,0 +1,44 @@
+[     161ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://localhost:5175/node_modules/.vite/deps/chunk-373CG7ZK.js?v=01629108:21548
+[   16621ms] [LOG] Loading micropip, packaging @ https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.asm.js:8
+[   16672ms] [LOG] Loaded micropip, packaging @ https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.asm.js:8
+[   16963ms] [LOG] packaging already loaded from default channel @ https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.asm.js:8
+[   16963ms] [LOG] Loading matplotlib, cycler, six, fonttools, kiwisolver, numpy, Pillow, pyparsing, python-dateutil, pytz, matplotlib-pyodide @ https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.asm.js:8
+[   17404ms] [LOG] Loaded Pillow, cycler, fonttools, kiwisolver, matplotlib, matplotlib-pyodide, numpy, pyparsing, python-dateutil, pytz, six @ https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.asm.js:8
+[ 3070971ms] [ERROR] Warning: You are calling ReactDOMClient.createRoot() on a container that has already been passed to createRoot() before. Instead, call root.render() on the existing root instead if you want to update it. @ http://localhost:5175/node_modules/.vite/deps/chunk-373CG7ZK.js?v=01629108:518
+[ 3104874ms] [ERROR] Warning: You are calling ReactDOMClient.createRoot() on a container that has already been passed to createRoot() before. Instead, call root.render() on the existing root instead if you want to update it. @ http://localhost:5175/node_modules/.vite/deps/chunk-373CG7ZK.js?v=01629108:518
+[ 3128581ms] [ERROR] Warning: You are calling ReactDOMClient.createRoot() on a container that has already been passed to createRoot() before. Instead, call root.render() on the existing root instead if you want to update it. @ http://localhost:5175/node_modules/.vite/deps/chunk-373CG7ZK.js?v=01629108:518
+[19042864ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://localhost:5175/node_modules/.vite/deps/chunk-373CG7ZK.js?v=01629108:21548
+[19072477ms] [ERROR] Warning: You are calling ReactDOMClient.createRoot() on a container that has already been passed to createRoot() before. Instead, call root.render() on the existing root instead if you want to update it. @ http://localhost:5175/node_modules/.vite/deps/chunk-373CG7ZK.js?v=01629108:518
+[19072552ms] NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at removeChildFromContainer (http://localhost:5175/node_modules/.vite/deps/chunk-373CG7ZK.js?v=01629108:8460:23)
+    at commitDeletionEffectsOnFiber (http://localhost:5175/node_modules/.vite/deps/chunk-373CG7ZK.js?v=01629108:17506:21)
+    at recursivelyTraverseDeletionEffects (http://localhost:5175/node_modules/.vite/deps/chunk-373CG7ZK.js?v=01629108:17484:13)
+    at commitDeletionEffectsOnFiber (http://localhost:5175/node_modules/.vite/deps/chunk-373CG7ZK.js?v=01629108:17575:15)
+    at recursivelyTraverseDeletionEffects (http://localhost:5175/node_modules/.vite/deps/chunk-373CG7ZK.js?v=01629108:17484:13)
+    at commitDeletionEffectsOnFiber (http://localhost:5175/node_modules/.vite/deps/chunk-373CG7ZK.js?v=01629108:17575:15)
+    at commitDeletionEffects (http://localhost:5175/node_modules/.vite/deps/chunk-373CG7ZK.js?v=01629108:17475:13)
+    at recursivelyTraverseMutationEffects (http://localhost:5175/node_modules/.vite/deps/chunk-373CG7ZK.js?v=01629108:17672:17)
+    at commitMutationEffectsOnFiber (http://localhost:5175/node_modules/.vite/deps/chunk-373CG7ZK.js?v=01629108:17792:15)
+    at commitMutationEffects (http://localhost:5175/node_modules/.vite/deps/chunk-373CG7ZK.js?v=01629108:17661:11)
+[19072535ms] [ERROR] The above error occurred in the <App> component:
+
+    at App (http://localhost:5175/Architecture.jsx:2926:29)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries. @ http://localhost:5175/node_modules/.vite/deps/chunk-373CG7ZK.js?v=01629108:14029
+[19072553ms] NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at removeChildFromContainer (http://localhost:5175/node_modules/.vite/deps/chunk-373CG7ZK.js?v=01629108:8460:23)
+    at commitDeletionEffectsOnFiber (http://localhost:5175/node_modules/.vite/deps/chunk-373CG7ZK.js?v=01629108:17506:21)
+    at recursivelyTraverseDeletionEffects (http://localhost:5175/node_modules/.vite/deps/chunk-373CG7ZK.js?v=01629108:17484:13)
+    at commitDeletionEffectsOnFiber (http://localhost:5175/node_modules/.vite/deps/chunk-373CG7ZK.js?v=01629108:17575:15)
+    at recursivelyTraverseDeletionEffects (http://localhost:5175/node_modules/.vite/deps/chunk-373CG7ZK.js?v=01629108:17484:13)
+    at commitDeletionEffectsOnFiber (http://localhost:5175/node_modules/.vite/deps/chunk-373CG7ZK.js?v=01629108:17575:15)
+    at commitDeletionEffects (http://localhost:5175/node_modules/.vite/deps/chunk-373CG7ZK.js?v=01629108:17475:13)
+    at recursivelyTraverseMutationEffects (http://localhost:5175/node_modules/.vite/deps/chunk-373CG7ZK.js?v=01629108:17672:17)
+    at commitMutationEffectsOnFiber (http://localhost:5175/node_modules/.vite/deps/chunk-373CG7ZK.js?v=01629108:17792:15)
+    at commitMutationEffects (http://localhost:5175/node_modules/.vite/deps/chunk-373CG7ZK.js?v=01629108:17661:11)
+[19079016ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://localhost:5175/node_modules/.vite/deps/chunk-373CG7ZK.js?v=01629108:21548
+[19144883ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:5175/src/viewer/DiagramViewer.jsx?t=1775827727506:0
+[19144883ms] [ERROR] [hmr] Failed to reload /src/viewer/DiagramViewer.jsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5175/@vite/client:175
+[19153062ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:5175/src/viewer/DiagramViewer.jsx?t=1775827735691:0
+[19153063ms] [ERROR] [hmr] Failed to reload /src/viewer/DiagramViewer.jsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5175/@vite/client:175

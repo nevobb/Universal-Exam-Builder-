@@ -1,0 +1,36 @@
+<h2>Design Section 1 — File Structure & Integration</h2>
+<p class="subtitle">How the viewer slots into the existing project</p>
+
+<div class="mockup">
+  <div class="mockup-header">File tree — changes highlighted</div>
+  <div class="mockup-body" style="font-family:monospace;font-size:13px;line-height:2">
+    <div>app/</div>
+    <div>&nbsp;&nbsp;index.html &nbsp;<span style="color:#94a3b8;font-size:11px">← add KaTeX CDN links here</span></div>
+    <div>&nbsp;&nbsp;Architecture.jsx &nbsp;<span style="color:#94a3b8;font-size:11px">← add "Exam Viewer" tab + import ExamViewer</span></div>
+    <div>&nbsp;&nbsp;src/</div>
+    <div style="color:#6366f1;font-weight:600">&nbsp;&nbsp;&nbsp;&nbsp;viewer/ &nbsp;<span style="color:#94a3b8;font-size:11px;font-weight:400">← NEW directory</span></div>
+    <div style="color:#6366f1">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;usePyodide.js &nbsp;<span style="color:#94a3b8;font-size:11px;font-weight:400">← lazy init hook + micropip installer</span></div>
+    <div style="color:#6366f1">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DiagramViewer.jsx &nbsp;<span style="color:#94a3b8;font-size:11px;font-weight:400">← runs Python → renders SVG</span></div>
+    <div style="color:#6366f1">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;QuestionCard.jsx &nbsp;<span style="color:#94a3b8;font-size:11px;font-weight:400">← renders one question (LaTeX + diagram + solution toggle)</span></div>
+    <div style="color:#6366f1">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ExamViewer.jsx &nbsp;<span style="color:#94a3b8;font-size:11px;font-weight:400">← page: JSON input + question list + loading overlay</span></div>
+  </div>
+</div>
+
+<div class="mockup" style="margin-top:20px">
+  <div class="mockup-header">Integration point in Architecture.jsx</div>
+  <div class="mockup-body" style="font-family:monospace;font-size:13px;line-height:1.8;color:#e2e8f0">
+    <span style="color:#94a3b8">// 1. One import at top of Architecture.jsx</span><br>
+    <span style="color:#a78bfa">import</span> ExamViewer <span style="color:#a78bfa">from</span> <span style="color:#86efac">'./src/viewer/ExamViewer'</span>;<br><br>
+    <span style="color:#94a3b8">// 2. Add tab to existing tab list</span><br>
+    { id: <span style="color:#86efac">'viewer'</span>, label: <span style="color:#86efac">'📋 צפייה במבחן'</span> }<br><br>
+    <span style="color:#94a3b8">// 3. Render in existing screen switch</span><br>
+    {activeTab === <span style="color:#86efac">'viewer'</span> &amp;&amp; &lt;<span style="color:#6366f1">ExamViewer</span> sharedData={examData} /&gt;}
+  </div>
+</div>
+
+<div class="section" style="margin-top:20px;padding:16px;background:rgba(16,185,129,0.08);border-radius:12px;border-left:3px solid #10b981">
+  <p class="label">Key point</p>
+  <p>The <code>window.__GEMINI_EXAM_DATA__</code> slot already exists in index.html. The viewer will poll this + receive data via a prop from Architecture.jsx, so both injection paths work with zero index.html changes beyond adding the KaTeX CDN link.</p>
+</div>
+
+<p style="margin-top:24px">Does this file structure and integration point look right? Reply here or in the terminal.</p>

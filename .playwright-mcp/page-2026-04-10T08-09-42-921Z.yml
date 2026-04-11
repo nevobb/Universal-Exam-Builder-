@@ -1,0 +1,28 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - button [ref=e6] [cursor=pointer]:
+        - img [ref=e7]
+      - heading "Universal Exam Builder" [level=1] [ref=e11]
+    - generic [ref=e12]:
+      - button "📋" [ref=e13] [cursor=pointer]
+      - button "מחולל פרומפטים" [ref=e14] [cursor=pointer]:
+        - img [ref=e15]
+      - button [ref=e17] [cursor=pointer]:
+        - img [ref=e18]
+  - generic [ref=e22]:
+    - generic [ref=e23]:
+      - heading "Universal Exam Builder" [level=1] [ref=e24]
+      - paragraph [ref=e25]: צרו, שתפו ונהלו מבחנים אינטראקטיביים בכל נושא. פלטפורמת הלמידה המתקדמת לסטודנטים.
+    - generic [ref=e26]:
+      - generic [ref=e27] [cursor=pointer]:
+        - img [ref=e29]
+        - generic [ref=e32]:
+          - heading "הדבקת קוד (JSON)" [level=3] [ref=e33]
+          - paragraph [ref=e34]: הדביקו קוד שנוצר על ידי Gemini
+      - generic [ref=e35] [cursor=pointer]:
+        - img [ref=e37]
+        - generic [ref=e40]:
+          - heading "טעינת קובץ" [level=3] [ref=e41]
+          - paragraph [ref=e42]: העלו קובץ .exam שחבר שיתף איתכם
+  - contentinfo [ref=e43]: Universal Exam Builder v3.1.5-PRO • Phase 3 Release

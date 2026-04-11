@@ -1,0 +1,25 @@
+- generic [ref=e6]:
+  - banner [ref=e7]:
+    - generic [ref=e8]:
+      - button [ref=e9] [cursor=pointer]:
+        - img [ref=e10]
+      - heading "Universal Exam Builder" [level=1] [ref=e14]
+    - generic [ref=e15]:
+      - button [ref=e47] [cursor=pointer]:
+        - img [ref=e48]
+      - button "📋" [active] [ref=e16] [cursor=pointer]
+      - button "מחולל פרומפטים" [ref=e17] [cursor=pointer]:
+        - img [ref=e18]
+      - button [ref=e20] [cursor=pointer]:
+        - img [ref=e21]
+  - generic [ref=e51]:
+    - generic [ref=e52]:
+      - generic [ref=e53]: "⚠️ מנוע השרטוט לא נטען: window.loadPyodide is not a function"
+      - button "נסה שנית" [ref=e54] [cursor=pointer]
+    - generic [ref=e55]:
+      - generic [ref=e56]: 📋 טען שאלות
+      - 'textbox "[{\"id\":1,\"type\":\"OPEN\",\"subject\":\"Physics\",\"difficulty\":\"Medium\",\"question\":\"...\",\"solution\":\"...\",\"python_drawer\":null}]" [ref=e57]'
+      - generic [ref=e58]:
+        - button "טען JSON" [ref=e59] [cursor=pointer]
+        - button "📂 העלה קובץ" [ref=e60] [cursor=pointer]
+  - contentinfo [ref=e46]: Universal Exam Builder v3.1.5-PRO • Phase 3 Release

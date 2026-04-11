@@ -1,1 +1,7 @@
 {"type":"server-started","port":61789,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:61789","screen_dir":"/Users/nevobiton/TestBuilderGem/.superpowers/brainstorm/60399-1775804907/content","state_dir":"/Users/nevobiton/TestBuilderGem/.superpowers/brainstorm/60399-1775804907/state"}
+{"type":"screen-added","file":"/Users/nevobiton/TestBuilderGem/.superpowers/brainstorm/60399-1775804907/content/approaches.html"}
+{"type":"screen-added","file":"/Users/nevobiton/TestBuilderGem/.superpowers/brainstorm/60399-1775804907/content/design-structure.html"}
+{"type":"screen-added","file":"/Users/nevobiton/TestBuilderGem/.superpowers/brainstorm/60399-1775804907/content/design-dataflow.html"}
+{"type":"screen-added","file":"/Users/nevobiton/TestBuilderGem/.superpowers/brainstorm/60399-1775804907/content/design-ux.html"}
+{"type":"screen-added","file":"/Users/nevobiton/TestBuilderGem/.superpowers/brainstorm/60399-1775804907/content/waiting.html"}
+{"type":"server-stopped","reason":"idle timeout"}

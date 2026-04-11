@@ -21,6 +21,8 @@ export default function DiagramViewer({ script, pyodide, status }) {
     if (status !== 'ready' || !pyodide) return;
     if (script === prevScript.current) return;
 
+    let cancelled = false;
+
     prevScript.current = script;
     setRunning(true);
     setSvg(null);
@@ -28,6 +30,7 @@ export default function DiagramViewer({ script, pyodide, status }) {
 
     pyodide.runPythonAsync(script)
       .then((result) => {
+        if (cancelled) return;
         const raw = typeof result === 'string' ? result : String(result);
         const clean = window.DOMPurify
           ? window.DOMPurify.sanitize(raw, { USE_PROFILES: { svg: true } })
@@ -35,11 +38,15 @@ export default function DiagramViewer({ script, pyodide, status }) {
         setSvg(clean);
       })
       .catch((err) => {
+        if (cancelled) return;
         setRunError(err.message || String(err));
       })
       .finally(() => {
+        if (cancelled) return;
         setRunning(false);
       });
+
+    return () => { cancelled = true; };
   }, [script, pyodide, status]);
 
   // Inject SVG into DOM safely via DOMParser (avoids dangerouslySetInnerHTML)

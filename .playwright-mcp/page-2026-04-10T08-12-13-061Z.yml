@@ -1,0 +1,21 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - button [ref=e6] [cursor=pointer]:
+        - img [ref=e7]
+      - heading "Universal Exam Builder" [level=1] [ref=e11]
+    - generic [ref=e12]:
+      - button [ref=e44] [cursor=pointer]:
+        - img [ref=e45]
+      - button "📋" [ref=e13] [cursor=pointer]
+      - button "מחולל פרומפטים" [ref=e14] [cursor=pointer]:
+        - img [ref=e15]
+      - button [ref=e17] [cursor=pointer]:
+        - img [ref=e18]
+  - generic [ref=e120]:
+    - generic [ref=e121]: 📋 טען שאלות
+    - 'textbox "[{\"id\":1,\"type\":\"OPEN\",\"subject\":\"Physics\",\"difficulty\":\"Medium\",\"question\":\"...\",\"solution\":\"...\",\"python_drawer\":null}]" [ref=e122]'
+    - generic [ref=e123]:
+      - button "טען JSON" [ref=e124] [cursor=pointer]
+      - button "📂 העלה קובץ" [ref=e125] [cursor=pointer]
+  - contentinfo [ref=e43]: Universal Exam Builder v3.1.5-PRO • Phase 3 Release

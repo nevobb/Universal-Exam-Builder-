@@ -1,0 +1,31 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - button [ref=e6] [cursor=pointer]:
+        - img [ref=e7]
+      - heading "Universal Exam Builder" [level=1] [ref=e11]
+    - generic [ref=e12]:
+      - button [ref=e44] [cursor=pointer]:
+        - img [ref=e45]
+      - button "📋" [ref=e13] [cursor=pointer]
+      - button "מחולל פרומפטים" [ref=e14] [cursor=pointer]:
+        - img [ref=e15]
+      - button [ref=e17] [cursor=pointer]:
+        - img [ref=e18]
+  - generic [ref=e77]:
+    - generic [ref=e126]:
+      - generic [ref=e127]: 1 שאלות
+      - button "🔄 טען מבחן אחר" [ref=e128] [cursor=pointer]
+    - generic [ref=e129]:
+      - generic [ref=e130]:
+        - generic [ref=e131]: שאלה 1
+        - generic [ref=e132]: Test
+        - generic [ref=e133]: Easy
+        - generic [ref=e134]: OPEN
+      - generic [ref=e135]: Error fallback test
+      - generic [ref=e136]:
+        - generic [ref=e137]: ⚠️ שגיאה בהרצת שרטוט
+        - group [ref=e138]:
+          - generic "פרטי השגיאה" [ref=e139] [cursor=pointer]
+      - button "👁️ הצג פתרון" [ref=e141] [cursor=pointer]
+  - contentinfo [ref=e43]: Universal Exam Builder v3.1.5-PRO • Phase 3 Release

@@ -574,7 +574,7 @@ function SummaryScreen({ questions, userAnswers, mode, expandedItems, onToggleIt
         navigator.clipboard.writeText(prompt).then(() => {
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
-        });
+        }).catch(err => console.error('[TestBuilder] Clipboard copy failed:', err));
     };
 
     return (
@@ -703,7 +703,7 @@ ${special ? `דגשים נוספים: ${special}` : ''}
             setTimeout(() => {
                 onSuccess();
             }, 2000);
-        });
+        }).catch(err => console.error('[TestBuilder] Clipboard copy failed:', err));
     };
 
     return (
@@ -724,7 +724,7 @@ ${special ? `דגשים נוספים: ${special}` : ''}
                             value={subject}
                             onChange={e => setSubject(e.target.value)}
                             placeholder="לדוגמה: מכניקה ניוטונית, פיזיולוגיה..."
-                            style={{ width: '100%', padding: '16px', borderRadius: TOKENS.radius.button, border: `2px solid ${TOKENS.colors.border}`, fontSize: '16px', outline: 'none', transition: 'border-color 0.2s', direction: 'rtl', fontFamily: 'inherit' }}
+                            style={{ width: '100%', padding: '16px', borderRadius: TOKENS.radius.btn, border: `2px solid ${TOKENS.colors.border}`, fontSize: '16px', outline: 'none', transition: 'border-color 0.2s', direction: 'rtl', fontFamily: 'inherit' }}
                         />
                     </div>
                     <div>
@@ -734,7 +734,7 @@ ${special ? `דגשים נוספים: ${special}` : ''}
                             value={count}
                             onChange={e => setCount(e.target.value)}
                             min="1" max="50"
-                            style={{ width: '100%', padding: '16px', borderRadius: TOKENS.radius.button, border: `2px solid ${TOKENS.colors.border}`, fontSize: '16px', outline: 'none', fontFamily: 'inherit' }}
+                            style={{ width: '100%', padding: '16px', borderRadius: TOKENS.radius.btn, border: `2px solid ${TOKENS.colors.border}`, fontSize: '16px', outline: 'none', fontFamily: 'inherit' }}
                         />
                     </div>
                     <div>
@@ -742,7 +742,7 @@ ${special ? `דגשים נוספים: ${special}` : ''}
                         <select
                             value={difficulty}
                             onChange={e => setDifficulty(e.target.value)}
-                            style={{ width: '100%', padding: '16px', borderRadius: TOKENS.radius.button, border: `2px solid ${TOKENS.colors.border}`, fontSize: '16px', outline: 'none', backgroundColor: 'white', fontFamily: 'inherit' }}
+                            style={{ width: '100%', padding: '16px', borderRadius: TOKENS.radius.btn, border: `2px solid ${TOKENS.colors.border}`, fontSize: '16px', outline: 'none', backgroundColor: 'white', fontFamily: 'inherit' }}
                         >
                             <option>קל (Easy)</option>
                             <option>בינוני (Medium)</option>
@@ -755,7 +755,7 @@ ${special ? `דגשים נוספים: ${special}` : ''}
                         <select
                             value={type}
                             onChange={e => setType(e.target.value)}
-                            style={{ width: '100%', padding: '16px', borderRadius: TOKENS.radius.button, border: `2px solid ${TOKENS.colors.border}`, fontSize: '16px', outline: 'none', backgroundColor: 'white', fontFamily: 'inherit' }}
+                            style={{ width: '100%', padding: '16px', borderRadius: TOKENS.radius.btn, border: `2px solid ${TOKENS.colors.border}`, fontSize: '16px', outline: 'none', backgroundColor: 'white', fontFamily: 'inherit' }}
                         >
                             <option>רק אמריקאי (MCQ)</option>
                             <option>רק פתוחות (Open Questions)</option>
@@ -768,7 +768,7 @@ ${special ? `דגשים נוספים: ${special}` : ''}
                             value={special}
                             onChange={e => setSpecial(e.target.value)}
                             placeholder="למשל: תתמקד בחוק השלישי של ניוטון..."
-                            style={{ width: '100%', padding: '16px', borderRadius: TOKENS.radius.button, border: `2px solid ${TOKENS.colors.border}`, fontSize: '16px', outline: 'none', height: '100px', resize: 'vertical', direction: 'rtl', fontFamily: 'inherit' }}
+                            style={{ width: '100%', padding: '16px', borderRadius: TOKENS.radius.btn, border: `2px solid ${TOKENS.colors.border}`, fontSize: '16px', outline: 'none', height: '100px', resize: 'vertical', direction: 'rtl', fontFamily: 'inherit' }}
                         />
                     </div>
                 </div>
@@ -923,12 +923,22 @@ export default function App() {
         if (sharedData) {
             try {
                 const decoded = JSON.parse(LZString.decompressFromEncodedURIComponent(sharedData));
-                if (Array.isArray(decoded)) {
-                    setDynamicQuestions(decoded);
+                const isValidExam = Array.isArray(decoded) &&
+                    decoded.length > 0 &&
+                    decoded.filter(Boolean).length > 0 &&
+                    decoded.some(item => item && (item.type || item.question || item.text));
+                if (isValidExam) {
+                    setDynamicQuestions(decoded.filter(Boolean));
                     setMode('welcome');
                     window.history.replaceState({}, document.title, window.location.pathname);
+                } else {
+                    console.warn('[TestBuilder] Shared exam URL contained invalid data, ignoring.');
+                    window.history.replaceState({}, document.title, window.location.pathname);
                 }
-            } catch (e) { console.error('Failed to load shared exam', e); }
+            } catch (e) {
+                console.error('[TestBuilder] Failed to parse shared exam URL:', e);
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
         }
     }, []);
 

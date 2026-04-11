@@ -109,9 +109,7 @@ export default function ShareExamButton({ examData }) {
       setCopied(true);
       if (timerRef.current) clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => setCopied(false), 2000);
-    }).catch(() => {
-      // fallback: do nothing silently
-    });
+    }).catch(err => console.error('[TestBuilder] Clipboard copy failed:', err));
   }
 
   return (

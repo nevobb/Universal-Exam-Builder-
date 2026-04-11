@@ -1,0 +1,48 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - button [ref=e6] [cursor=pointer]:
+        - img [ref=e7]
+      - heading "Universal Exam Builder" [level=1] [ref=e11]
+    - generic [ref=e12]:
+      - button [ref=e44] [cursor=pointer]:
+        - img [ref=e45]
+      - button "📋" [ref=e13] [cursor=pointer]
+      - button "מחולל פרומפטים" [active] [ref=e14] [cursor=pointer]:
+        - img [ref=e15]
+      - button [ref=e17] [cursor=pointer]:
+        - img [ref=e18]
+  - generic [ref=e49]:
+    - generic [ref=e50]:
+      - img [ref=e52]
+      - heading "מחולל הפרומפטים שלי" [level=2] [ref=e54]
+    - generic [ref=e55]:
+      - generic [ref=e56]:
+        - generic [ref=e57]: נושא המבחן
+        - 'textbox "לדוגמה: מכניקה ניוטונית, פיזיולוגיה..." [ref=e58]'
+      - generic [ref=e59]:
+        - generic [ref=e60]: כמות שאלות
+        - spinbutton [ref=e61]: "10"
+      - generic [ref=e62]:
+        - generic [ref=e63]: רמת קושי
+        - combobox [ref=e64]:
+          - option "קל (Easy)"
+          - option "בינוני (Medium)" [selected]
+          - option "קשה (Hard)"
+          - option "מעורב (Mixed)"
+      - generic [ref=e65]:
+        - generic [ref=e66]: סוג שאלות
+        - combobox [ref=e67]:
+          - option "רק אמריקאי (MCQ)" [selected]
+          - option "רק פתוחות (Open Questions)"
+          - option "מעורב (Mixed)"
+      - generic [ref=e68]:
+        - generic [ref=e69]: דגשים מיוחדים (אופציונלי)
+        - 'textbox "למשל: תתמקד בחוק השלישי של ניוטון..." [ref=e70]'
+    - button "הפק והעתק פרומפט ✨" [disabled] [ref=e71] [cursor=pointer]:
+      - img [ref=e72]
+      - text: הפק והעתק פרומפט ✨
+    - generic [ref=e74]:
+      - generic [ref=e75]: "תצוגה מקדימה:"
+      - generic [ref=e76]: "צור מבחן ב[בחר נושא]. כמות שאלות: 10. רמת קושי: בינוני (Medium). סוג שאלות: משולב (Mixed). הנחיות קריטיות: 1. החזר אך ורק מערך JSON תקין (Array of Objects). 2. ללא טקסט מקדים, ללא הסברים וללא Preamble. 3. השתמש במבנה המוגדר ב-System Prompt שלך."
+  - contentinfo [ref=e43]: Universal Exam Builder v3.1.5-PRO • Phase 3 Release

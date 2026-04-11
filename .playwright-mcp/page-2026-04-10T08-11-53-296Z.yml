@@ -1,0 +1,43 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - button [ref=e6] [cursor=pointer]:
+        - img [ref=e7]
+      - heading "Universal Exam Builder" [level=1] [ref=e11]
+    - generic [ref=e12]:
+      - button [ref=e44] [cursor=pointer]:
+        - img [ref=e45]
+      - button "📋" [ref=e13] [cursor=pointer]
+      - button "מחולל פרומפטים" [ref=e14] [cursor=pointer]:
+        - img [ref=e15]
+      - button [ref=e17] [cursor=pointer]:
+        - img [ref=e18]
+  - generic [ref=e77]:
+    - generic [ref=e84]:
+      - generic [ref=e85]: 1 שאלות
+      - button "🔄 טען מבחן אחר" [ref=e86] [cursor=pointer]
+    - generic [ref=e87]:
+      - generic [ref=e88]:
+        - generic [ref=e89]: שאלה 1
+        - generic [ref=e90]: Physics - Circuits
+        - generic [ref=e91]: Medium
+        - generic [ref=e92]: OPEN
+      - generic [ref=e93]: "מצא את הזרם במעגל הבא:"
+      - img [ref=e95]
+      - generic [ref=e102]:
+        - button "🙈 הסתר פתרון" [active] [ref=e104] [cursor=pointer]
+        - generic [ref=e105]:
+          - text: א.
+          - generic [ref=e107]:
+            - math [ref=e109]:
+              - generic [ref=e111]:
+                - generic [ref=e112]: I
+                - generic [ref=e113]: =
+                - generic [ref=e114]: "2"
+                - generic [ref=e115]: A
+            - generic [ref=e116]:
+              - generic [ref=e117]: I =
+              - generic [ref=e118]:
+                - text: "2"
+                - generic [ref=e119]: A
+  - contentinfo [ref=e43]: Universal Exam Builder v3.1.5-PRO • Phase 3 Release

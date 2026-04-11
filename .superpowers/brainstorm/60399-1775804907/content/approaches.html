@@ -1,0 +1,66 @@
+<h2>3 Architectural Approaches for the STEM Exam Viewer</h2>
+<p class="subtitle">Choose the structure that feels right for this codebase</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Single File — <code>ExamViewer.jsx</code></h3>
+      <p>One self-contained file with the Pyodide hook, QuestionCard, DiagramViewer, and JSON input — all co-located. Imported into Architecture.jsx as a new tab. Matches the existing "one big file" culture perfectly.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul>
+          <li>Consistent with Architecture.jsx style</li>
+          <li>Zero extra files to wire together</li>
+          <li>Easy to hand off to the AI for edits</li>
+        </ul></div>
+        <div class="cons"><h4>Cons</h4><ul>
+          <li>File will be 400–600 lines</li>
+          <li>All concerns in one place</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B ⭐ Recommended</div>
+    <div class="content">
+      <h3>Modular — <code>app/src/viewer/</code> folder</h3>
+      <p>4 small, focused files: <code>ExamViewer.jsx</code> (page), <code>usePyodide.js</code> (hook), <code>QuestionCard.jsx</code>, <code>DiagramViewer.jsx</code>. Architecture.jsx imports only the top-level ExamViewer. Clean separation, each file has one job.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul>
+          <li>Each unit is small and understandable</li>
+          <li>Easy to test DiagramViewer in isolation</li>
+          <li>Best for future growth</li>
+        </ul></div>
+        <div class="cons"><h4>Cons</h4><ul>
+          <li>More files than the existing pattern</li>
+          <li>Requires a new directory</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Inline Expansion — Add directly to Architecture.jsx</h3>
+      <p>All viewer logic added as new sections at the bottom of the existing Architecture.jsx monolith. Zero new files, maximum integration with existing state/theme/icons.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul>
+          <li>Shares icons, tokens, theme hooks for free</li>
+          <li>No import wiring needed</li>
+        </ul></div>
+        <div class="cons"><h4>Cons</h4><ul>
+          <li>Architecture.jsx already 1,218 lines — grows to ~1,800+</li>
+          <li>Harder to reason about</li>
+          <li>You explicitly asked for "own component file"</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:24px;padding:16px;background:rgba(99,102,241,0.08);border-radius:12px;border-left:3px solid #6366f1">
+  <p class="label">My Recommendation</p>
+  <p><strong>Option B</strong> — Modular viewer folder. The 4-file structure gives each component a clear single purpose, keeps files readable, and makes Pyodide's async lifecycle completely isolated from the rest of the app. Architecture.jsx stays clean.</p>
+</div>
