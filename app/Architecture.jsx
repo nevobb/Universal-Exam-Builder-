@@ -282,13 +282,10 @@ function PortalCard({ icon, title, desc, onClick }) {
 // ============================================================
 // COMPONENT: AppHeader
 // ============================================================
-function AppHeader({ onToggleSidebar, onOpenSettings, onPromptArchitect, onViewerOpen, onHome, currentTitle, showHome }) {
+function AppHeader({ onOpenSettings, onPromptArchitect, onViewerOpen, onHome, currentTitle, showHome }) {
     return (
         <header className="no-print app-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 40px', backgroundColor: TOKENS.colors.white, borderBottom: `1px solid ${TOKENS.colors.border}`, position: 'sticky', top: 0, zIndex: 100, boxShadow: TOKENS.shadows.sm, backdropFilter: 'blur(10px)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: TOKENS.spacing.lg }}>
-                <button onClick={onToggleSidebar} style={{ background: 'none', border: 'none', cursor: 'pointer', color: TOKENS.colors.textSecondary, padding: '8px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }} onMouseOver={e => e.currentTarget.style.backgroundColor = TOKENS.colors.surface} onMouseOut={e => e.currentTarget.style.backgroundColor = 'transparent'}>
-                    <Icons.History />
-                </button>
                 <h1 style={{ fontSize: '20px', fontWeight: '800', margin: 0, color: TOKENS.colors.primary, letterSpacing: '-0.02em' }}>{currentTitle || 'Universal Exam Builder'}</h1>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -686,16 +683,24 @@ function PromptArchitectView({ onSuccess }) {
     const [special, setSpecial] = useState('');
     const [isCopied, setIsCopied] = useState(false);
 
-    const generatedPrompt = `צור מבחן ב${subject || '[בחר נושא]'}.
-כמות שאלות: ${count}.
-רמת קושי: ${difficulty}.
-סוג שאלות: ${type}.
-${special ? `דגשים נוספים: ${special}` : ''}
+    const generatedPrompt = `נושא: ${subject || '[בחר נושא]'}
+כמות שאלות: ${count}
+רמת קושי: ${difficulty}
+סוג שאלות: ${type}
+${special ? `\nדגשים נוספים: ${special}` : ''}
 
-הנחיות קריטיות:
-1. החזר אך ורק מערך JSON תקין (Array of Objects).
-2. ללא טקסט מקדים, ללא הסברים וללא Preamble.
-3. השתמש במבנה המוגדר ב-System Prompt שלך.`;
+===== פרוטוקול חובה =====
+• עקוב אחר רצף הפלט של ה-System Prompt: 1. <scratchpad> לחשיבה ואימות מתמטי → 2. בלוק ${'```'}json עם המערך הסופי.
+• אל תדלג על ה-scratchpad — הוא נדרש לאימות מתמטי.
+• ה-JSON חייב להיות מערך תקין של אובייקטים ([...]) — ללא טקסט לפני או אחרי.
+
+===== כלל הזהב של LaTeX =====
+⚠️ קריטי: כל backslash ב-LaTeX חייב להיות DOUBLE-ESCAPED.
+דוגמאות: \\\\frac, \\\\sqrt, \\\\vec, \\\\Delta, \\\\text
+זה בלתי-ניתן-למשא-ומתן עבור בטיחות פענוח JSON.
+
+===== כלל DRY לשאלות פתוחות =====
+עבור שאלות מסוג Open: בשדה "solution" ספק אך ורק את התשובה הסופית (DRY) — ללא חזרה על תהליך הפתרון שכבר מופיע ב-scratchpad.`;
 
     const handleCopy = () => {
         navigator.clipboard.writeText(generatedPrompt).then(() => {
@@ -884,7 +889,19 @@ function isValidTime(val) {
 
 function buildMoreQuestionsPrompt(subject, count, type) {
     const typeLabel = type === 'MCQ' ? 'MCQ' : 'פתוחות';
-    return `צור ${count} שאלות ${typeLabel} נוספות למבחן '${subject}'. שמור על אותו schema בדיוק.`;
+    return `נושא: ${subject}
+כמות שאלות נוספות: ${count}
+סוג: ${typeLabel}
+
+===== פרוטוקול חובה =====
+• עקוב אחר רצף הפלט: 1. <scratchpad> → 2. בלוק ${'```'}json.
+• שמור על אותו Schema בדיוק. ה-JSON חייב להיות מערך תקין ([...]).
+
+===== כלל הזהב של LaTeX =====
+⚠️ כל backslash ב-LaTeX חייב להיות DOUBLE-ESCAPED (\\\\frac, \\\\sqrt, \\\\vec).
+
+===== DRY =====
+שאלות פתוחות: בשדה "solution" — תשובה סופית בלבד, ללא חזרה על הפתרון.`;
 }
 
 // ============================================================
