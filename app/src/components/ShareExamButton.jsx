@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 const LZString = {
     _f: String.fromCharCode,
@@ -94,14 +94,21 @@ const LZString = {
 
 export default function ShareExamButton({ examData }) {
   const [copied, setCopied] = useState(false);
+  const timerRef = useRef(null);
+
+  useEffect(() => {
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+  }, []);
 
   function handleShare() {
+    if (!examData || (Array.isArray(examData) && examData.length === 0)) return;
     const json = JSON.stringify(examData);
     const compressedData = LZString.compressToEncodedURIComponent(json);
     const shareUrl = window.location.origin + window.location.pathname + '?exam=' + compressedData;
     navigator.clipboard.writeText(shareUrl).then(() => {
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => setCopied(false), 2000);
     }).catch(() => {
       // fallback: do nothing silently
     });
@@ -110,6 +117,8 @@ export default function ShareExamButton({ examData }) {
   return (
     <button
       onClick={handleShare}
+      aria-label={copied ? 'Copied to clipboard' : 'Share exam via link'}
+      aria-pressed={copied}
       style={{
         marginTop: '24px',
         padding: '14px 32px',
