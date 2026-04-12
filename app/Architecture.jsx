@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { createRoot } from 'react-dom/client';
+import LZString from 'lz-string';
 import ExamViewer from './src/viewer/ExamViewer.jsx';
 import ShareExamButton from './src/components/ShareExamButton';
 import { usePyodide } from './src/viewer/usePyodide.js';
@@ -62,101 +63,6 @@ const TOKENS = {
         card: 'var(--radius-card)',
         full: '9999px',
         lg: '12px',
-    }
-};
-
-// ============================================================
-// UTILITIES: LZString Compression
-// ============================================================
-const LZString = {
-    _f: String.fromCharCode,
-    compressToEncodedURIComponent: (a) => {
-        if (null == a) return "";
-        var b = LZString._c(a, 6, (a) => "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-$".charAt(a));
-        return b;
-    },
-    decompressFromEncodedURIComponent: (a) => {
-        if (null == a) return "";
-        if ("" == a) return null;
-        a = a.replace(/ /g, "+");
-        return LZString._d(a.length, 32, (b) => "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-$".indexOf(a.charAt(b)));
-    },
-    _c: (a, b, c) => {
-        if (null == a) return "";
-        var d, e, f, g = {}, h = {}, i = "", j = "", k = "", l = 2, m = 3, n = 2, o = [], p = 0, q = 0;
-        for (f = 0; f < a.length; f += 1) if (i = a.charAt(f), Object.prototype.hasOwnProperty.call(g, i) || (g[i] = m++, h[i] = !0), j = k + i, Object.prototype.hasOwnProperty.call(g, j)) k = j; else {
-            if (Object.prototype.hasOwnProperty.call(h, k)) {
-                if (k.charCodeAt(0) < 256) {
-                    for (d = 0; d < n; d++) p <<= 1, q == b - 1 ? (q = 0, o.push(c(p)), p = 0) : q++;
-                    for (e = k.charCodeAt(0), d = 0; d < 8; d++) p = p << 1 | 1 & e, q == b - 1 ? (q = 0, o.push(c(p)), p = 0) : q++, e >>= 1
-                } else {
-                    for (e = 1, d = 0; d < n; d++) p = p << 1 | e, q == b - 1 ? (q = 0, o.push(c(p)), p = 0) : q++, e = 0;
-                    for (e = k.charCodeAt(0), d = 0; d < 16; d++) p = p << 1 | 1 & e, q == b - 1 ? (q = 0, o.push(c(p)), p = 0) : q++, e >>= 1
-                }
-                l--, 0 == l && (l = Math.pow(2, n), n++), delete h[k]
-            } else for (e = g[k], d = 0; d < n; d++) p = p << 1 | 1 & e, q == b - 1 ? (q = 0, o.push(c(p)), p = 0) : q++, e >>= 1;
-            l--, 0 == l && (l = Math.pow(2, n), n++), g[j] = m++, k = String(i)
-        }
-        if ("" !== k) {
-            if (Object.prototype.hasOwnProperty.call(h, k)) {
-                if (k.charCodeAt(0) < 256) {
-                    for (d = 0; d < n; d++) p <<= 1, q == b - 1 ? (q = 0, o.push(c(p)), p = 0) : q++;
-                    for (e = k.charCodeAt(0), d = 0; d < 8; d++) p = p << 1 | 1 & e, q == b - 1 ? (q = 0, o.push(c(p)), p = 0) : q++, e >>= 1
-                } else {
-                    for (e = 1, d = 0; d < n; d++) p = p << 1 | e, q == b - 1 ? (q = 0, o.push(c(p)), p = 0) : q++, e = 0;
-                    for (e = k.charCodeAt(0), d = 0; d < 16; d++) p = p << 1 | 1 & e, q == b - 1 ? (q = 0, o.push(c(p)), p = 0) : q++, e >>= 1
-                }
-                l--, 0 == l && (l = Math.pow(2, n), n++), delete h[k]
-            } else for (e = g[k], d = 0; d < n; d++) p = p << 1 | 1 & e, q == b - 1 ? (q = 0, o.push(c(p)), p = 0) : q++, e >>= 1;
-            l--, 0 == l && (l = Math.pow(2, n), n++)
-        }
-        for (e = 2, d = 0; d < n; d++) p = p << 1 | 1 & e, q == b - 1 ? (q = 0, o.push(c(p)), p = 0) : q++, e >>= 1;
-        for (; ;) {
-            if (p <<= 1, q == b - 1) {
-                o.push(c(p));
-                break
-            }
-            q++
-        }
-        return o.join("")
-    },
-    _d: (a, b, c) => {
-        var d, e, f, g, h, i, j, k = [], l = 4, m = 4, n = 3, o = "", p = [], q = { val: c(0), position: b, index: 1 };
-        for (d = 0; d < 3; d += 1) k[d] = d;
-        for (f = 0, h = Math.pow(2, 2), g = 1; g != h;) e = q.val & q.position, q.position >>= 1, 0 == q.position && (q.position = b, q.val = c(q.index++)), f |= (0 < e ? 1 : 0) * g, g <<= 1;
-        switch (f) {
-            case 0:
-                for (f = 0, h = Math.pow(2, 8), g = 1; g != h;) e = q.val & q.position, q.position >>= 1, 0 == q.position && (q.position = b, q.val = c(q.index++)), f |= (0 < e ? 1 : 0) * g, g <<= 1;
-                j = LZString._f(f);
-                break;
-            case 1:
-                for (f = 0, h = Math.pow(2, 16), g = 1; g != h;) e = q.val & q.position, q.position >>= 1, 0 == q.position && (q.position = b, q.val = c(q.index++)), f |= (0 < e ? 1 : 0) * g, g <<= 1;
-                j = LZString._f(f);
-                break;
-            case 2:
-                return ""
-        }
-        for (k[3] = j, i = j, p.push(j); ;) {
-            if (q.index > a) return "";
-            for (f = 0, h = Math.pow(2, n), g = 1; g != h;) e = q.val & q.position, q.position >>= 1, 0 == q.position && (q.position = b, q.val = c(q.index++)), f |= (0 < e ? 1 : 0) * g, g <<= 1;
-            switch (j = f) {
-                case 0:
-                    for (f = 0, h = Math.pow(2, 8), g = 1; g != h;) e = q.val & q.position, q.position >>= 1, 0 == q.position && (q.position = b, q.val = c(q.index++)), f |= (0 < e ? 1 : 0) * g, g <<= 1;
-                    k[m++] = LZString._f(f), j = m - 1, l--;
-                    break;
-                case 1:
-                    for (f = 0, h = Math.pow(2, 16), g = 1; g != h;) e = q.val & q.position, q.position >>= 1, 0 == q.position && (q.position = b, q.val = c(q.index++)), f |= (0 < e ? 1 : 0) * g, g <<= 1;
-                    k[m++] = LZString._f(f), j = m - 1, l--;
-                    break;
-                case 2:
-                    return p.join("")
-            }
-            if (0 == l && (l = Math.pow(2, n), n++), k[j]) o = k[j]; else {
-                if (j !== m) return null;
-                o = i + i.charAt(0)
-            }
-            p.push(o), k[m++] = i + o.charAt(0), l--, i = o, 0 == l && (l = Math.pow(2, n), n++)
-        }
     }
 };
 
@@ -939,6 +845,168 @@ function safeSetHistory(data) {
     }
 }
 
+function parseSharedExamData(sharedData) {
+    const decompressed = LZString.decompressFromEncodedURIComponent(sharedData);
+
+    if (typeof decompressed === 'string' && decompressed.trim()) {
+        try {
+            return JSON.parse(decompressed);
+        } catch {
+            // Fall through to raw JSON parsing for backward compatibility.
+        }
+    }
+
+    return JSON.parse(sharedData);
+}
+
+function normalizeSharedSettings(settings) {
+    const normalized = {};
+    if (!settings || typeof settings !== 'object') return normalized;
+
+    if (settings.theme === 'light' || settings.theme === 'dark') {
+        normalized.theme = settings.theme;
+    }
+
+    if (settings.preset === 'pro' || settings.preset === 'zen' || settings.preset === 'pulse') {
+        normalized.preset = settings.preset;
+    }
+
+    if (settings.displayMode === 'scroll' || settings.displayMode === 'focus') {
+        normalized.displayMode = settings.displayMode;
+    }
+
+    return normalized;
+}
+
+function isFiniteDiagramNumber(value) {
+    return typeof value === 'number' && Number.isFinite(value);
+}
+
+function isLikelyCoordinateKey(parentKey) {
+    const normalizedKey = String(parentKey || '').trim().toLowerCase();
+    if (!normalizedKey) return false;
+
+    if (['path', 'paths', 'segment', 'segments', 'curve', 'curves', 'polyline', 'polylines', 'trail', 'trails', 'diagram'].includes(normalizedKey)) {
+        return true;
+    }
+
+    return ['point', 'points', 'coord', 'coords', 'coordinate', 'coordinates', 'vertex', 'vertices', 'handle', 'handles', 'anchor', 'anchors', 'controlpoint', 'controlpoints'].some((token) =>
+        normalizedKey === token || normalizedKey.startsWith(token) || normalizedKey.endsWith(token)
+    );
+}
+
+function looksLikeSlimCoordinateArray(value, parentKey) {
+    return Array.isArray(value) &&
+        value.length >= 2 &&
+        value.length % 2 === 0 &&
+        value.every(isFiniteDiagramNumber) &&
+        isLikelyCoordinateKey(parentKey);
+}
+
+function inflateSlimCoordinateArray(values) {
+    const points = [];
+    for (let i = 0; i < values.length; i += 2) {
+        points.push({ x: values[i], y: values[i + 1] });
+    }
+    return points;
+}
+
+function inflateSlimDiagramValue(value, parentKey = 'diagram') {
+    if (looksLikeSlimCoordinateArray(value, parentKey)) {
+        return inflateSlimCoordinateArray(value);
+    }
+
+    if (Array.isArray(value)) {
+        return value.map((item) => inflateSlimDiagramValue(item, parentKey));
+    }
+
+    if (value && typeof value === 'object') {
+        return Object.fromEntries(
+            Object.entries(value).map(([key, nestedValue]) => [key, inflateSlimDiagramValue(nestedValue, key)])
+        );
+    }
+
+    return value;
+}
+
+function inflateSlimDiagram(diagram) {
+    if (!diagram || typeof diagram !== 'object') return diagram;
+    return inflateSlimDiagramValue(diagram);
+}
+
+function normalizeSharedQuestion(question, index, fallbackTitle) {
+    if (!question || typeof question !== 'object') return null;
+
+    const rawType = typeof question.type === 'string' ? question.type.trim().toLowerCase() : '';
+    const normalizedType =
+        rawType === 'mcq' || rawType === 'multiple-choice'
+            ? 'MCQ'
+            : rawType === 'open' || rawType === 'open-ended'
+                ? 'Open'
+                : ((Array.isArray(question.options) && question.options.length > 0) ? 'MCQ' : 'Open');
+
+    const normalized = {
+        id: question.id ?? `q${index + 1}`,
+        type: normalizedType,
+        question: typeof question.question === 'string' ? question.question : (typeof question.text === 'string' ? question.text : ''),
+        solution: typeof question.solution === 'string' ? question.solution : (typeof question.explanation === 'string' ? question.explanation : ''),
+    };
+
+    if (typeof question.subject === 'string' && question.subject.trim()) {
+        normalized.subject = question.subject.trim();
+    } else if (fallbackTitle) {
+        normalized.subject = fallbackTitle;
+    }
+
+    if (typeof question.difficulty === 'string' && question.difficulty.trim()) {
+        normalized.difficulty = question.difficulty.trim();
+    }
+
+    if (Array.isArray(question.options) && question.options.length > 0) {
+        normalized.options = question.options;
+    }
+
+    const rawAnswer = question.correctAnswer !== undefined ? question.correctAnswer : question.answer;
+    if (rawAnswer !== undefined && rawAnswer !== null && rawAnswer !== '') {
+        normalized.correctAnswer = rawAnswer;
+    }
+
+    if (typeof question.python_drawer === 'string' && question.python_drawer.trim()) {
+        normalized.python_drawer = question.python_drawer;
+    } else if (typeof question.diagram === 'string' && question.diagram.trim()) {
+        normalized.diagram = question.diagram;
+    } else if (question.diagram && typeof question.diagram === 'object') {
+        normalized.diagram = inflateSlimDiagram(question.diagram);
+    } else if (typeof question.svg === 'string' && question.svg.trim()) {
+        normalized.svg = question.svg;
+    }
+
+    return normalized;
+}
+
+function normalizeSharedPayload(payload) {
+    if (Array.isArray(payload)) {
+        return {
+            title: null,
+            settings: {},
+            questions: payload.map((question, index) => normalizeSharedQuestion(question, index, null)).filter(Boolean),
+        };
+    }
+
+    if (!payload || typeof payload !== 'object') return null;
+
+    const title = typeof payload.title === 'string' && payload.title.trim() ? payload.title.trim() : null;
+    const questions = Array.isArray(payload.questions)
+        ? payload.questions.map((question, index) => normalizeSharedQuestion(question, index, title)).filter(Boolean)
+        : [];
+
+    return {
+        title,
+        settings: normalizeSharedSettings(payload.settings),
+        questions,
+    };
+}
+
 function isValidQuestionArray(data) {
     return (
         Array.isArray(data) &&
@@ -1008,6 +1076,7 @@ export default function App() {
     const [examTimeLeft, setExamTimeLeft] = useState(null);
     const [expandedItems, setExpandedItems] = useState({});
     const [displayMode, setDisplayMode] = useState('scroll');
+    const [sharedExamTitle, setSharedExamTitle] = useState(null);
 
 
     useEffect(() => {
@@ -1048,13 +1117,19 @@ export default function App() {
         const sharedData = params.get('exam');
         if (sharedData) {
             try {
-                const decoded = JSON.parse(LZString.decompressFromEncodedURIComponent(sharedData));
-                const isValidExam = Array.isArray(decoded) &&
-                    decoded.length > 0 &&
-                    decoded.filter(Boolean).length > 0 &&
-                    decoded.some(item => item && (item.type || item.question || item.text));
+                const decoded = parseSharedExamData(sharedData);
+                const payload = normalizeSharedPayload(decoded);
+                const questions = payload?.questions || [];
+                const isValidExam = Array.isArray(questions) &&
+                    questions.length > 0 &&
+                    questions.filter(Boolean).length > 0 &&
+                    questions.some(item => item && (item.type || item.question || item.text));
                 if (isValidExam) {
-                    setDynamicQuestions(decoded.filter(Boolean));
+                    setDynamicQuestions(questions.filter(Boolean));
+                    setSharedExamTitle(payload?.title || null);
+                    if (payload?.settings?.theme) setTheme(payload.settings.theme);
+                    if (payload?.settings?.preset) setPreset(payload.settings.preset);
+                    if (payload?.settings?.displayMode) setDisplayMode(payload.settings.displayMode);
                     setMode('welcome');
                     window.history.replaceState({}, document.title, window.location.pathname);
                 } else {
@@ -1079,6 +1154,7 @@ export default function App() {
                 alert('פורמט JSON לא תקין: חסרים שדות חובה (id, type, question, solution).');
                 return;
             }
+            setSharedExamTitle(null);
             setDynamicQuestions(data);
             setMode('viewer');
             const newEntry = {
@@ -1097,6 +1173,7 @@ export default function App() {
 
 
     const handleLoadFromHistory = (entry) => {
+        setSharedExamTitle(null);
         setDynamicQuestions(entry.questions);
         setMode('viewer');
         setIsHistoryModalOpen(false);
@@ -1170,7 +1247,7 @@ export default function App() {
     }, [mode, examTimeLeft, isFinished]);
 
 
-    const examTitle = dynamicQuestions[0]?.subject || 'Universal Exam Builder';
+    const examTitle = sharedExamTitle || dynamicQuestions[0]?.subject || 'Universal Exam Builder';
 
     const handleCopyBulkPrompt = (type) => {
         const prompt = buildMoreQuestionsPrompt(examTitle || 'המבחן', 5, type);
@@ -1228,8 +1305,8 @@ export default function App() {
                             <button onClick={() => { setMode('viewer'); setCurrentIdx(0); setUserAnswers({}); setIsFinished(false); }} style={{ padding: '24px 64px', backgroundColor: TOKENS.colors.primary, color: 'white', border: 'none', borderRadius: TOKENS.radius.card, fontSize: '20px', fontWeight: '900', cursor: 'pointer', boxShadow: TOKENS.shadows.md, display: 'flex', alignItems: 'center', gap: '12px' }}>📖 מצב למידה</button>
                             <button onClick={() => setMode('exam-setup')} style={{ padding: '24px 64px', backgroundColor: TOKENS.colors.white, color: TOKENS.colors.primary, border: `3px solid ${TOKENS.colors.primary}`, borderRadius: TOKENS.radius.card, fontSize: '20px', fontWeight: '900', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px' }}>⏱️ מצב בחינה</button>
                         </div>
-                        <ShareExamButton examData={dynamicQuestions} />
-                        <button onClick={() => { setDynamicQuestions([]); setMode(null); }} style={{ marginTop: '80px', background: 'none', border: 'none', color: TOKENS.colors.textSecondary, cursor: 'pointer', fontWeight: '700', fontSize: '16px' }}>🔄 טען מבחן אחר</button>
+                        <ShareExamButton examData={dynamicQuestions} examTitle={examTitle} shareSettings={{ theme, preset, displayMode }} />
+                        <button onClick={() => { setSharedExamTitle(null); setDynamicQuestions([]); setMode(null); }} style={{ marginTop: '80px', background: 'none', border: 'none', color: TOKENS.colors.textSecondary, cursor: 'pointer', fontWeight: '700', fontSize: '16px' }}>🔄 טען מבחן אחר</button>
                     </div>
                 ) : (
                     <PortalView onOpenImport={() => setIsImportModalOpen(true)} onFileUpload={handleFileUpload} onOpenHistory={() => setIsHistoryModalOpen(true)} historyCount={history.length} />
