@@ -60,6 +60,21 @@ describe('splitLatex', () => {
     ]);
   });
 
+  it('removes duplicated single-character ghost text after inline math', () => {
+    const result = splitLatex('$R$ R');
+    expect(result).toEqual([{ type: 'inline', content: 'R' }]);
+  });
+
+  it('removes duplicated multi-character ghost text after inline math', () => {
+    const result = splitLatex('$v_0$ v_0');
+    expect(result).toEqual([{ type: 'inline', content: 'v_0' }]);
+  });
+
+  it('removes duplicated greek ghost text after inline math', () => {
+    const result = splitLatex('$\\rho$ ρ');
+    expect(result).toEqual([{ type: 'inline', content: '\\rho' }]);
+  });
+
   it('prioritizes $$ over $ (block wins when both delimiters present)', () => {
     const result = splitLatex('$$a + b$$');
     expect(result[0].type).toBe('block');
@@ -116,7 +131,7 @@ describe('parseViewerJson', () => {
   });
 
   it('preserves all question fields through parse', () => {
-    const q = { id: 1, type: 'OPEN', question: 'מהו?', solution: 'כך', python_drawer: null };
+    const q = { id: 'q1', type: 'open-ended', question: 'מהו?', solution: 'כך', python_drawer: null };
     const result = parseViewerJson(JSON.stringify([q]));
     expect(result.ok).toBe(true);
     expect(result.data[0]).toMatchObject(q);

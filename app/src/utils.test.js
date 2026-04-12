@@ -121,19 +121,29 @@ function parseExamJson(raw) {
  */
 function validateQuestion(q) {
   const errors = [];
-  if (typeof q.id !== 'number') errors.push('id must be a number');
-  if (q.type !== 'MCQ' && q.type !== 'Open') errors.push('type must be "MCQ" or "Open"');
+  if ((typeof q.id !== 'number' && typeof q.id !== 'string') || q.id === '') errors.push('id is required');
+  if (q.type !== 'multiple-choice' && q.type !== 'open-ended') errors.push('type must be "multiple-choice" or "open-ended"');
   if (typeof q.subject !== 'string' || !q.subject) errors.push('subject is required');
-  if (!['Easy', 'Medium', 'Hard'].includes(q.difficulty)) errors.push('difficulty must be Easy, Medium, or Hard');
+  if (typeof q.difficulty !== 'string' || !q.difficulty) errors.push('difficulty is required');
   if (typeof q.question !== 'string' || !q.question) errors.push('question text is required');
   if (typeof q.solution !== 'string' || !q.solution) errors.push('solution is required');
+  if (typeof q.explanation !== 'string' || !q.explanation) errors.push('explanation is required');
+  if (!(q.python_drawer === null || typeof q.python_drawer === 'string' || q.python_drawer === undefined)) {
+    errors.push('python_drawer must be a string or null');
+  }
 
-  if (q.type === 'MCQ') {
-    if (!Array.isArray(q.options) || q.options.length !== 4) errors.push('MCQ must have exactly 4 options');
-    if (typeof q.correctAnswer !== 'string') errors.push('correctAnswer is required for MCQ');
-    if (q.options && !q.options.some(o => o.id === q.correctAnswer)) {
-      errors.push('correctAnswer must match one of the option ids');
+  if (q.type === 'multiple-choice') {
+    if (!Array.isArray(q.options) || q.options.length !== 4 || !q.options.every(o => typeof o === 'string')) {
+      errors.push('multiple-choice questions must have exactly 4 string options');
     }
+    if (!Number.isInteger(q.correctAnswer) || q.correctAnswer < 0 || q.correctAnswer > 3) {
+      errors.push('multiple-choice correctAnswer must be an integer between 0 and 3');
+    }
+  }
+
+  if (q.type === 'open-ended') {
+    if (!Array.isArray(q.options) || q.options.length !== 0) errors.push('open-ended questions must have empty options array');
+    if (q.correctAnswer !== null) errors.push('open-ended correctAnswer must be null');
   }
 
   return errors;
@@ -153,7 +163,18 @@ describe('LZString', () => {
 
   it('compresses and decompresses a JSON exam array string', () => {
     const exam = JSON.stringify([
-      { id: 1, type: 'MCQ', subject: 'Physics', difficulty: 'Medium', question: 'Q1?', options: [], correctAnswer: 'A', solution: 'Sol.' }
+      {
+        id: 'q1',
+        type: 'multiple-choice',
+        subject: 'Physics 2',
+        difficulty: 'Intermediate Foundation',
+        question: 'Q1?',
+        options: ['A', 'B', 'C', 'D'],
+        correctAnswer: 0,
+        python_drawer: null,
+        solution: 'Sol.',
+        explanation: 'Hint.',
+      }
     ]);
     const compressed = LZString.compressToEncodedURIComponent(exam);
     const decompressed = LZString.decompressFromEncodedURIComponent(compressed);
@@ -215,7 +236,18 @@ describe('LZString', () => {
 
 describe('parseExamJson', () => {
   const validExam = JSON.stringify([
-    { id: 1, type: 'MCQ', subject: 'Math', difficulty: 'Easy', question: 'Q?', options: [], correctAnswer: 'A', solution: 'S.' }
+    {
+      id: 'q1',
+      type: 'multiple-choice',
+      subject: 'Math',
+      difficulty: 'Intermediate Foundation',
+      question: 'Q?',
+      options: ['1', '2', '3', '4'],
+      correctAnswer: 0,
+      python_drawer: null,
+      solution: 'S.',
+      explanation: 'Hint.',
+    }
   ]);
 
   it('parses a valid JSON array string', () => {
@@ -275,28 +307,29 @@ describe('parseExamJson', () => {
 
 describe('validateQuestion', () => {
   const validMCQ = {
-    id: 1,
-    type: 'MCQ',
-    subject: 'Physics',
-    difficulty: 'Medium',
+    id: 'q1',
+    type: 'multiple-choice',
+    subject: 'Physics 2',
+    difficulty: 'Intermediate Foundation',
     question: 'What is $F = ma$?',
-    options: [
-      { id: 'A', text: 'Force' },
-      { id: 'B', text: 'Mass' },
-      { id: 'C', text: 'Acceleration' },
-      { id: 'D', text: 'None' },
-    ],
-    correctAnswer: 'A',
+    options: ['Force', 'Mass', 'Acceleration', 'None'],
+    correctAnswer: 0,
+    python_drawer: null,
     solution: 'Newton\'s second law.',
+    explanation: 'Use the definition of force.',
   };
 
   const validOpen = {
-    id: 2,
-    type: 'Open',
+    id: 'q2',
+    type: 'open-ended',
     subject: 'Math',
-    difficulty: 'Hard',
+    difficulty: 'High Academic Challenge',
     question: 'Prove the Fundamental Theorem of Calculus.',
+    options: [],
+    correctAnswer: null,
+    python_drawer: null,
     solution: 'Full proof here...',
+    explanation: 'Relate accumulation to antiderivatives.',
   };
 
   it('returns no errors for a valid MCQ question', () => {
@@ -308,18 +341,18 @@ describe('validateQuestion', () => {
   });
 
   it('reports error when id is not a number', () => {
-    const errors = validateQuestion({ ...validMCQ, id: 'one' });
-    expect(errors).toContain('id must be a number');
+    const errors = validateQuestion({ ...validMCQ, id: '' });
+    expect(errors).toContain('id is required');
   });
 
   it('reports error for invalid type', () => {
     const errors = validateQuestion({ ...validMCQ, type: 'TrueFalse' });
-    expect(errors).toContain('type must be "MCQ" or "Open"');
+    expect(errors).toContain('type must be "multiple-choice" or "open-ended"');
   });
 
   it('reports error for invalid difficulty', () => {
-    const errors = validateQuestion({ ...validMCQ, difficulty: 'Extreme' });
-    expect(errors).toContain('difficulty must be Easy, Medium, or Hard');
+    const errors = validateQuestion({ ...validMCQ, difficulty: '' });
+    expect(errors).toContain('difficulty is required');
   });
 
   it('reports error for missing subject', () => {
@@ -337,26 +370,51 @@ describe('validateQuestion', () => {
     expect(errors).toContain('solution is required');
   });
 
+  it('reports error for missing explanation', () => {
+    const errors = validateQuestion({ ...validMCQ, explanation: '' });
+    expect(errors).toContain('explanation is required');
+  });
+
   it('reports error when MCQ has wrong number of options', () => {
-    const errors = validateQuestion({ ...validMCQ, options: [{ id: 'A', text: 'X' }] });
-    expect(errors).toContain('MCQ must have exactly 4 options');
+    const errors = validateQuestion({ ...validMCQ, options: ['X'] });
+    expect(errors).toContain('multiple-choice questions must have exactly 4 string options');
   });
 
-  it('reports error when correctAnswer does not match any option id', () => {
-    const errors = validateQuestion({ ...validMCQ, correctAnswer: 'E' });
-    expect(errors).toContain('correctAnswer must match one of the option ids');
+  it('reports error when MCQ correctAnswer is out of range', () => {
+    const errors = validateQuestion({ ...validMCQ, correctAnswer: 4 });
+    expect(errors).toContain('multiple-choice correctAnswer must be an integer between 0 and 3');
   });
 
-  it('does not require options or correctAnswer for Open questions', () => {
+  it('requires empty options and null correctAnswer for Open questions', () => {
     const errors = validateQuestion(validOpen);
     expect(errors).toHaveLength(0);
   });
 
-  it('accepts all valid difficulty levels', () => {
-    for (const difficulty of ['Easy', 'Medium', 'Hard']) {
+  it('accepts current prompt difficulty strings', () => {
+    for (const difficulty of [
+      'Basic Concept Understanding',
+      'Intermediate Foundation',
+      'High Academic Challenge',
+      'Extremely Challenging (Abuse Protocol)',
+    ]) {
       const errors = validateQuestion({ ...validOpen, difficulty });
       expect(errors).toHaveLength(0);
     }
+  });
+
+  it('reports error when open-ended options are not empty', () => {
+    const errors = validateQuestion({ ...validOpen, options: ['A'] });
+    expect(errors).toContain('open-ended questions must have empty options array');
+  });
+
+  it('reports error when open-ended correctAnswer is not null', () => {
+    const errors = validateQuestion({ ...validOpen, correctAnswer: 0 });
+    expect(errors).toContain('open-ended correctAnswer must be null');
+  });
+
+  it('reports error when python_drawer is not a string or null', () => {
+    const errors = validateQuestion({ ...validMCQ, python_drawer: { bad: true } });
+    expect(errors).toContain('python_drawer must be a string or null');
   });
 });
 
@@ -367,27 +425,33 @@ describe('validateQuestion', () => {
 describe('Full round-trip: exam JSON -> LZString -> decompress -> parse', () => {
   const exam = [
     {
-      id: 1,
-      type: 'MCQ',
+      id: 'q1',
+      type: 'multiple-choice',
       subject: 'Computer Science - Algorithms',
-      difficulty: 'Hard',
+      difficulty: 'High Academic Challenge',
       question: 'What is the time complexity of building a heap from $n$ elements?',
       options: [
-        { id: 'A', text: '$O(n \\log n)$' },
-        { id: 'B', text: '$O(n)$' },
-        { id: 'C', text: '$O(n^2)$' },
-        { id: 'D', text: '$O(\\log n)$' },
+        '$O(n \\log n)$',
+        '$O(n)$',
+        '$O(n^2)$',
+        '$O(\\log n)$',
       ],
-      correctAnswer: 'B',
+      correctAnswer: 1,
+      python_drawer: null,
       solution: 'Bottom-up heapify runs in $O(n)$ time.',
+      explanation: 'Use the standard heap-build analysis.',
     },
     {
-      id: 2,
-      type: 'Open',
+      id: 'q2',
+      type: 'open-ended',
       subject: 'Medical Science - Physiology',
-      difficulty: 'Medium',
+      difficulty: 'Intermediate Foundation',
       question: 'Describe the role of ADH in urine concentration.',
+      options: [],
+      correctAnswer: null,
+      python_drawer: null,
       solution: 'ADH inserts AQP2 channels...',
+      explanation: 'Connect ADH to water reabsorption.',
     },
   ];
 
@@ -398,8 +462,8 @@ describe('Full round-trip: exam JSON -> LZString -> decompress -> parse', () => 
     const parsed = parseExamJson(decompressed);
 
     expect(parsed).toHaveLength(2);
-    expect(parsed[0].id).toBe(1);
-    expect(parsed[1].type).toBe('Open');
+    expect(parsed[0].id).toBe('q1');
+    expect(parsed[1].type).toBe('open-ended');
     expect(JSON.stringify(parsed)).toBe(serialized);
   });
 
@@ -447,8 +511,17 @@ function isValidTime(val) {
  * @param {'MCQ'|'Open'} type
  */
 function buildMoreQuestionsPrompt(subject, count, type) {
-  const typeLabel = type === 'MCQ' ? 'MCQ' : 'פתוחות';
-  return `צור ${count} שאלות ${typeLabel} נוספות למבחן '${subject}'. שמור על אותו schema בדיוק.`;
+  const typeLabel = type === 'MCQ' ? 'מרובות בחירה (MCQ)' : 'פתוחות (Open-Ended)';
+  return `נושא: ${subject}
+כמות שאלות נוספות: ${count}
+סוג: ${typeLabel}
+
+===== פרוטוקול זהב (Golden Protocol) =====
+- הפלט הסופי חייב להיות אך ורק בלוק קוד json יחיד עם מערך JSON תקין.
+- type חייב להיות בדיוק "multiple-choice" או "open-ended".
+- בשאלות multiple-choice: options חייב להכיל בדיוק 4 מחרוזות; correctAnswer חייב להיות מספר שלם בין 0 ל-3.
+- בשאלות open-ended: options חייב להיות []; correctAnswer חייב להיות null.
+- השתמש ב-python_drawer כשדה עליון בלבד; אין להשתמש ב-diagram מקונן.`;
 }
 
 // ============================================================
@@ -457,7 +530,7 @@ function buildMoreQuestionsPrompt(subject, count, type) {
 
 describe('isValidQuestionArray', () => {
   it('returns true for a valid question array', () => {
-    const data = [{ id: 1, type: 'MCQ', question: 'Q?', solution: 'S.' }];
+    const data = [{ id: 'q1', type: 'multiple-choice', question: 'Q?', solution: 'S.' }];
     expect(isValidQuestionArray(data)).toBe(true);
   });
 
@@ -474,22 +547,22 @@ describe('isValidQuestionArray', () => {
   });
 
   it('returns false when first item is missing "id"', () => {
-    const data = [{ type: 'MCQ', question: 'Q?', solution: 'S.' }];
+    const data = [{ type: 'multiple-choice', question: 'Q?', solution: 'S.' }];
     expect(isValidQuestionArray(data)).toBe(false);
   });
 
   it('returns false when first item is missing "question"', () => {
-    const data = [{ id: 1, type: 'MCQ', solution: 'S.' }];
+    const data = [{ id: 'q1', type: 'multiple-choice', solution: 'S.' }];
     expect(isValidQuestionArray(data)).toBe(false);
   });
 
   it('returns false when first item is missing "solution"', () => {
-    const data = [{ id: 1, type: 'MCQ', question: 'Q?' }];
+    const data = [{ id: 'q1', type: 'multiple-choice', question: 'Q?' }];
     expect(isValidQuestionArray(data)).toBe(false);
   });
 
   it('returns true even when extra fields are present', () => {
-    const data = [{ id: 1, type: 'MCQ', question: 'Q?', solution: 'S.', options: [], correctAnswer: 'A' }];
+    const data = [{ id: 'q1', type: 'multiple-choice', question: 'Q?', solution: 'S.', options: ['A', 'B', 'C', 'D'], correctAnswer: 0 }];
     expect(isValidQuestionArray(data)).toBe(true);
   });
 });
@@ -557,14 +630,18 @@ describe('buildMoreQuestionsPrompt', () => {
     expect(result).toContain('5');
     expect(result).toContain('Math');
     expect(result).toContain('פתוחות');
+    expect(result).toContain('open-ended');
   });
 
   it('returns a non-empty string', () => {
     expect(buildMoreQuestionsPrompt('Bio', 3, 'MCQ').length).toBeGreaterThan(0);
   });
 
-  it('includes schema instruction', () => {
+  it('includes current schema instructions', () => {
     const result = buildMoreQuestionsPrompt('Chem', 8, 'Open');
-    expect(result).toContain('schema');
+    expect(result).toContain('json');
+    expect(result).toContain('multiple-choice');
+    expect(result).toContain('python_drawer');
+    expect(result).not.toContain('<scratchpad>');
   });
 });

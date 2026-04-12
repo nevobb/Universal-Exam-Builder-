@@ -13,11 +13,30 @@
  * @param {string|null} str
  * @returns {{ type: string, content: string }[]}
  */
+function normalizeLatexInput(str) {
+  if (!str) return '';
+  return str
+    .replace(/\r\n?/g, '\n')
+    .replace(/\\\\/g, '\\')
+    // ── Simple Markdown Support ──
+    .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+    // ── Aggressive Ghosting Shield ──
+    // Pattern 1: Single-char variable ghost "$R$ R" → "$R$"
+    .replace(/\$([A-Za-z0-9])\$\s+(\1)\b/g, (_m, v) => '$' + v + '$')
+    // Pattern 2: Multi-char expression ghost "$v_0$ v_0" → "$v_0$"
+    .replace(/\$([^$]{2,})\$\s+([A-Za-z0-9_]+)\b/g, (match, latex, plain) => {
+      const stripped = latex.replace(/[\\{}_^]/g, '');
+      const normalizedPlain = plain.replace(/_/g, '');
+      return stripped === normalizedPlain ? '$' + latex + '$' : match;
+    })
+    // Pattern 3: Greek letter ghost "$\rho$ ρ"
+    .replace(/\$\\([a-zA-Z]+)\$\s+[\u0370-\u03FF\u0590-\u05FF]/g, (_m, cmd) => '$\\\\' + cmd + '$');
+}
+
 export function splitLatex(str) {
   if (!str || typeof str !== 'string') return [];
 
-  // Unescape double-backslashes produced by JSON double-encoding
-  const unescaped = str.replace(/\\\\/g, '\\');
+  const normalized = normalizeLatexInput(str);
 
   const segments = [];
   // Match $$ first (greedy prevention: non-greedy .+?)
@@ -25,10 +44,10 @@ export function splitLatex(str) {
   let lastIndex = 0;
   let match;
 
-  while ((match = RE.exec(unescaped)) !== null) {
+  while ((match = RE.exec(normalized)) !== null) {
     // Text before match
     if (match.index > lastIndex) {
-      const text = unescaped.slice(lastIndex, match.index);
+      const text = normalized.slice(lastIndex, match.index);
       if (text) segments.push({ type: 'text', content: text });
     }
 
@@ -44,8 +63,8 @@ export function splitLatex(str) {
   }
 
   // Remaining text after last match
-  if (lastIndex < unescaped.length) {
-    const tail = unescaped.slice(lastIndex);
+  if (lastIndex < normalized.length) {
+    const tail = normalized.slice(lastIndex);
     if (tail) segments.push({ type: 'text', content: tail });
   }
 

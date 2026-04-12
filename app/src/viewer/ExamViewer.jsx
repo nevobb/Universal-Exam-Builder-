@@ -1,39 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { usePyodide } from './usePyodide.js';
 import QuestionCard from './QuestionCard.jsx';
-
-// Pyodide CDN script injection (idempotent). Returns a promise that resolves
-// when window.loadPyodide is available.
-const PYODIDE_POLL_TIMEOUT_MS = 10000;
-
-let _scriptPromise = null;
-function ensurePyodideScript() {
-  if (_scriptPromise) return _scriptPromise;
-  const existing = document.getElementById('pyodide-cdn');
-  if (existing) {
-    // Script tag already present — wait for window.loadPyodide to be defined
-    _scriptPromise = new Promise((resolve, reject) => {
-      if (typeof window.loadPyodide === 'function') { resolve(); return; }
-      const check = setInterval(() => {
-        if (typeof window.loadPyodide === 'function') { clearInterval(check); resolve(); }
-      }, 50);
-      setTimeout(() => {
-        clearInterval(check);
-        reject(new Error('Failed to load Pyodide from CDN'));
-      }, PYODIDE_POLL_TIMEOUT_MS);
-    });
-    return _scriptPromise;
-  }
-  _scriptPromise = new Promise((resolve, reject) => {
-    const s = document.createElement('script');
-    s.id = 'pyodide-cdn';
-    s.src = 'https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js';
-    s.onload = resolve;
-    s.onerror = () => reject(new Error('Failed to load Pyodide CDN script'));
-    document.head.appendChild(s);
-  });
-  return _scriptPromise;
-}
 
 /**
  * Parses raw JSON string → { ok: true, data: [] } | { ok: false, error: string }
@@ -58,23 +24,17 @@ export function parseViewerJson(raw) {
 
 /**
  * Top-level Exam Viewer page.
- *
- * Props:
- *   sharedData {array|null} — questions injected by the builder tab; null if none.
  */
-export default function ExamViewer({ sharedData }) {
-  const { pyodide, status, error: pyError, init } = usePyodide();
+export default function ExamViewer({ sharedData, pyodide, pyodideStatus, pyodideError, displayMode, setDisplayMode, onCopyBulkPrompt }) {
+  const status = pyodideStatus ?? 'idle';
+  const pyError = pyodideError ?? null;
   const [questions, setQuestions] = useState(null);
   const [jsonInput, setJsonInput] = useState('');
   const [parseError, setParseError] = useState(null);
+  const [currentFocusIdx, setCurrentFocusIdx] = useState(0);
+  const [bulkMcqCopied, setBulkMcqCopied] = useState(false);
+  const [bulkOpenCopied, setBulkOpenCopied] = useState(false);
   const fileRef = useRef(null);
-
-  // Kick off lazy Pyodide load — wait for CDN script before calling init()
-  useEffect(() => {
-    ensurePyodideScript().then(init).catch(() => {
-      // Script load failure is surfaced by init() itself via status='error'
-    });
-  }, [init]);
 
   // Auto-load from prop or window injection
   useEffect(() => {
@@ -159,12 +119,6 @@ export default function ExamViewer({ sharedData }) {
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     }}>
       <span>⚠️ מנוע השרטוט לא נטען: {pyError}</span>
-      <button
-        onClick={() => init()}
-        style={{ background: 'var(--color-error)', color: 'white', border: 'none', borderRadius: '6px', padding: '6px 14px', cursor: 'pointer', fontSize: '13px' }}
-      >
-        נסה שנית
-      </button>
     </div>
   );
 
@@ -184,7 +138,7 @@ export default function ExamViewer({ sharedData }) {
       <textarea
         value={jsonInput}
         onChange={e => setJsonInput(e.target.value)}
-        placeholder={'[{"id":1,"type":"OPEN","subject":"Physics","difficulty":"Medium","question":"...","solution":"...","python_drawer":null}]'}
+        placeholder={'[{"id":"q1","type":"open-ended","subject":"Physics 2","difficulty":"Intermediate Foundation","question":"...","options":[],"correctAnswer":null,"python_drawer":null,"solution":"...","explanation":"..."}]'}
         style={{
           width: '100%', boxSizing: 'border-box',
           height: '120px', resize: 'vertical',
@@ -239,25 +193,94 @@ export default function ExamViewer({ sharedData }) {
   // Loaded question list
   const questionList = questions && (
     <>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
-        <div style={{ fontWeight: '900', fontSize: '22px', color: 'var(--color-text)' }}>
-          {questions.length} שאלות
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px', backgroundColor: 'var(--color-surface)', padding: '12px 20px', borderRadius: '14px', border: '1px solid var(--color-border)' }}>
+        <div style={{ display: 'flex', gap: '8px', backgroundColor: 'var(--color-white)', padding: '4px', borderRadius: '12px', border: '1px solid var(--color-border)' }}>
+          <button onClick={() => setDisplayMode('scroll')} style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: '800', transition: 'all 0.2s', backgroundColor: displayMode === 'scroll' ? 'var(--color-primary)' : 'transparent', color: displayMode === 'scroll' ? 'white' : 'var(--color-text-secondary)' }}>📜 רשימה</button>
+          <button onClick={() => setDisplayMode('focus')} style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: '800', transition: 'all 0.2s', backgroundColor: displayMode === 'focus' ? 'var(--color-primary)' : 'transparent', color: displayMode === 'focus' ? 'white' : 'var(--color-text-secondary)' }}>🎯 מיקוד</button>
         </div>
-        <button
-          onClick={() => { setQuestions(null); setJsonInput(''); setParseError(null); }}
-          style={{
-            background: 'none', border: '1px solid var(--color-border)',
-            borderRadius: '8px', padding: '7px 14px',
-            cursor: 'pointer', color: 'var(--color-text-secondary)',
-            fontSize: '13px',
-          }}
-        >
-          🔄 טען מבחן אחר
-        </button>
+        <div style={{ fontWeight: '900', fontSize: '15px', color: 'var(--color-primary)' }}>
+          {questions.length} שאלות במבחן
+        </div>
+        <button onClick={() => { setQuestions(null); setJsonInput(''); setParseError(null); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)', fontSize: '13px', fontWeight: '700', textDecoration: 'underline' }}>🔄 טען אחר</button>
       </div>
-      {questions.map((q, i) => (
-        <QuestionCard key={q.id ?? i} question={q} pyodide={pyodide} status={status} index={i} />
-      ))}
+
+      {displayMode === 'scroll' ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+          {questions.map((q, i) => (
+            <QuestionCard key={q.id ?? i} question={q} pyodide={pyodide} status={status} index={i} />
+          ))}
+
+          {/* Global "More Questions" Section at the bottom of the list */}
+          <div style={{
+            marginTop: '40px', padding: '40px', textAlign: 'center',
+            backgroundColor: 'var(--color-surface)', borderRadius: '24px',
+            border: '2px dashed var(--color-border)',
+            animation: 'fadeIn 0.5s ease-out'
+          }}>
+            <h3 style={{ fontSize: '20px', fontWeight: '900', marginBottom: '12px', color: 'var(--color-text)' }}>💡 רוצה עוד שאלות למבחן?</h3>
+            <p style={{ color: 'var(--color-text-secondary)', marginBottom: '32px', fontSize: '15px' }}>הפוך את המבחן למקיף יותר בלחיצת כפתור אחת</p>
+            <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
+              <button
+                onClick={() => {
+                  if (onCopyBulkPrompt) {
+                    onCopyBulkPrompt('MCQ');
+                    setBulkMcqCopied(true);
+                    setTimeout(() => setBulkMcqCopied(false), 2000);
+                  }
+                }}
+                style={{
+                  padding: '14px 28px', backgroundColor: bulkMcqCopied ? 'var(--color-success)' : 'var(--color-primary)',
+                  color: 'white', border: 'none', borderRadius: '12px',
+                  fontSize: '15px', fontWeight: '800', cursor: 'pointer', transition: '0.2s',
+                  display: 'flex', alignItems: 'center', gap: '8px'
+                }}
+              >
+                {bulkMcqCopied ? '✅ הועתק!' : '+ בקש 5 שאלות MCQ'}
+              </button>
+              <button
+                onClick={() => {
+                  if (onCopyBulkPrompt) {
+                    onCopyBulkPrompt('Open');
+                    setBulkOpenCopied(true);
+                    setTimeout(() => setBulkOpenCopied(false), 2000);
+                  }
+                }}
+                style={{
+                  padding: '14px 28px', backgroundColor: 'var(--color-white)',
+                  color: bulkOpenCopied ? 'var(--color-success)' : 'var(--color-primary)',
+                  border: `2px solid ${bulkOpenCopied ? 'var(--color-success)' : 'var(--color-primary)'}`,
+                  borderRadius: '12px', fontSize: '15px', fontWeight: '800', cursor: 'pointer', transition: '0.2s'
+                }}
+              >
+                {bulkOpenCopied ? '✅ הועתק!' : '+ בקש 5 שאלות פתוחות'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div style={{ animation: 'fadeIn 0.4s ease-out' }}>
+          <QuestionCard question={questions[currentFocusIdx]} pyodide={pyodide} status={status} index={currentFocusIdx} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '40px', padding: '20px', backgroundColor: 'var(--color-white)', borderRadius: '16px', boxShadow: 'var(--card-shadow)', border: '1px solid var(--color-border)' }}>
+            <button
+              onClick={() => setCurrentFocusIdx(p => Math.max(0, p - 1))}
+              disabled={currentFocusIdx === 0}
+              style={{ padding: '12px 24px', borderRadius: '10px', border: '1px solid var(--color-border)', backgroundColor: 'var(--color-white)', cursor: currentFocusIdx === 0 ? 'default' : 'pointer', fontWeight: '800', opacity: currentFocusIdx === 0 ? 0.4 : 1, transition: 'all 0.2s' }}
+            >
+              שאלה קודמת
+            </button>
+            <div style={{ fontWeight: '900', color: 'var(--color-text-secondary)', fontSize: '15px' }}>
+              {currentFocusIdx + 1} / {questions.length}
+            </div>
+            <button
+              onClick={() => setCurrentFocusIdx(p => Math.min(questions.length - 1, p + 1))}
+              disabled={currentFocusIdx === questions.length - 1}
+              style={{ padding: '12px 24px', borderRadius: '10px', border: 'none', backgroundColor: 'var(--color-primary)', color: 'white', cursor: currentFocusIdx === questions.length - 1 ? 'default' : 'pointer', fontWeight: '800', opacity: currentFocusIdx === questions.length - 1 ? 0.4 : 1, transition: 'all 0.2s', boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)' }}
+            >
+              שאלה הבאה
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 

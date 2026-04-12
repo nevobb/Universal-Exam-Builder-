@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { createRoot } from 'react-dom/client';
 import ExamViewer from './src/viewer/ExamViewer.jsx';
 import ShareExamButton from './src/components/ShareExamButton';
+import { usePyodide } from './src/viewer/usePyodide.js';
 
 import './theme.css';
 
@@ -217,7 +218,11 @@ function parseParagraph(text, keyOffset) {
 
 function MixedContent({ text }) {
     if (!text) return null;
-    const paragraphs = text.split(/\n\n+/);
+
+    // Simple Markdown Bold support
+    const processedText = String(text).replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+
+    const paragraphs = processedText.split(/\n\n+/);
     let keyCounter = 0;
     return (
         <span style={{ display: 'block' }}>
@@ -294,15 +299,6 @@ function AppHeader({ onOpenSettings, onPromptArchitect, onViewerOpen, onHome, cu
                         <Icons.Home />
                     </button>
                 )}
-                <button
-                    title="צפייה במבחן"
-                    onClick={onViewerOpen}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: TOKENS.colors.primary, padding: '8px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}
-                    onMouseOver={e => e.currentTarget.style.backgroundColor = TOKENS.colors.primaryLight}
-                    onMouseOut={e => e.currentTarget.style.backgroundColor = 'transparent'}
-                >
-                    📋
-                </button>
                 <button title="מחולל פרומפטים" onClick={onPromptArchitect} style={{ background: 'none', border: 'none', cursor: 'pointer', color: TOKENS.colors.primary, padding: '8px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }} onMouseOver={e => e.currentTarget.style.backgroundColor = TOKENS.colors.primaryLight} onMouseOut={e => e.currentTarget.style.backgroundColor = 'transparent'}>
                     <Icons.Sparkles />
                 </button>
@@ -444,6 +440,25 @@ function MCQQuestion({ question, userAnswer, onAnswer, mode }) {
     const isPractice = mode === 'practice';
     const hasSvg = !!question.svg;
 
+    // Normalizing options if they are string[]
+    const options = Array.isArray(question.options) ? question.options.map((opt, idx) => {
+        if (typeof opt === 'string') {
+            const labels = ['A', 'B', 'C', 'D', 'E', 'F'];
+            return { id: labels[idx] || String(idx + 1), text: opt };
+        }
+        return opt;
+    }) : [];
+
+    // Normalizing Correct Answer
+    const rawCorrect = question.correctAnswer !== undefined ? question.correctAnswer : question.answer;
+    let resolvedCorrect = rawCorrect;
+    if (typeof rawCorrect === 'number') {
+        resolvedCorrect = options[rawCorrect]?.id || String(rawCorrect + 1);
+    } else if (typeof rawCorrect === 'string' && !options.some(o => o.id === rawCorrect)) {
+        const found = options.find(o => o.text === rawCorrect);
+        if (found) resolvedCorrect = found.id;
+    }
+
     return (
         <div style={{ display: 'grid', gridTemplateColumns: hasSvg ? 'repeat(auto-fit, minmax(350px, 1fr))' : '1fr', gap: '40px', alignItems: 'start' }}>
             <div style={{ order: 1 }}>
@@ -451,9 +466,9 @@ function MCQQuestion({ question, userAnswer, onAnswer, mode }) {
                     <MixedContent text={question.question} />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: TOKENS.spacing.md }}>
-                    {question.options.map((option) => {
+                    {options.map((option) => {
                         const isSelected = userAnswer === option.id;
-                        const isCorrect = option.id === question.correctAnswer;
+                        const isCorrect = option.id === resolvedCorrect;
                         const isLocked = isPractice && !!userAnswer;
                         let bgColor = TOKENS.colors.white, borderColor = TOKENS.colors.border;
                         if (isPractice && userAnswer) {
@@ -510,6 +525,7 @@ function OpenQuestion({ question, mode, showSolution, onToggleSolution }) {
                     צפה בפתרון המלא
                 </button>
             )}
+
         </div>
     );
 }
@@ -537,7 +553,21 @@ function QuestionScreen({ questions, mode, examTimeLeft, currentIdx, userAnswers
                 {userAnswers[q.id] && mode === 'practice' && (
                     <div style={{ position: 'absolute', top: '-12px', left: '24px', backgroundColor: TOKENS.colors.success, color: 'white', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '900', boxShadow: TOKENS.shadows.sm }}>נפתר</div>
                 )}
-                {q.type === 'MCQ' ? <MCQQuestion question={q} userAnswer={userAnswers[q.id]} onAnswer={onAnswer} mode={mode} /> : <OpenQuestion question={q} mode={mode} showSolution={showSolution} onToggleSolution={onToggleSolution} />}
+                {q.type === 'MCQ' ? (
+                    <MCQQuestion
+                        question={q}
+                        userAnswer={userAnswers[q.id]}
+                        onAnswer={onAnswer}
+                        mode={mode}
+                    />
+                ) : (
+                    <OpenQuestion
+                        question={q}
+                        mode={mode}
+                        showSolution={showSolution}
+                        onToggleSolution={onToggleSolution}
+                    />
+                )}
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: '20px' }}>
                 <button onClick={onPrev} disabled={currentIdx === 0} style={{ padding: '14px 28px', borderRadius: TOKENS.radius.lg, border: `2px solid ${TOKENS.colors.border}`, backgroundColor: TOKENS.colors.white, display: 'flex', alignItems: 'center', gap: '12px', cursor: currentIdx === 0 ? 'default' : 'pointer', fontWeight: '800', opacity: currentIdx === 0 ? 0.5 : 1 }}>
@@ -623,21 +653,26 @@ function SummaryScreen({ questions, userAnswers, mode, expandedItems, onToggleIt
                     );
                 })}
             </div>
-            <div className="action-buttons" style={{ display: 'flex', gap: '16px', justifyContent: 'center', marginBottom: '32px' }}>
-                <button
-                    onClick={() => handleCopyPrompt('MCQ', setMcqCopied)}
-                    style={{ flex: 1, maxWidth: '280px', padding: '14px 24px', borderRadius: TOKENS.radius.btn, border: `2px solid ${TOKENS.colors.primary}`, backgroundColor: TOKENS.colors.white, color: mcqCopied ? TOKENS.colors.success : TOKENS.colors.primary, fontWeight: '800', fontSize: '15px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'all 0.2s' }}
-                >
-                    {mcqCopied ? <><Icons.Check /> הועתק!</> : '+ בקש עוד שאלות MCQ'}
-                </button>
-                <button
-                    onClick={() => handleCopyPrompt('Open', setOpenCopied)}
-                    style={{ flex: 1, maxWidth: '280px', padding: '14px 24px', borderRadius: TOKENS.radius.btn, border: `2px solid ${TOKENS.colors.primary}`, backgroundColor: TOKENS.colors.white, color: openCopied ? TOKENS.colors.success : TOKENS.colors.primary, fontWeight: '800', fontSize: '15px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'all 0.2s' }}
-                >
-                    {openCopied ? <><Icons.Check /> הועתק!</> : '+ בקש עוד שאלות פתוחות'}
-                </button>
+
+            {/* Global Add Section at Summary */}
+            <div className="no-print" style={{ marginTop: '40px', padding: '40px', textAlign: 'center', backgroundColor: TOKENS.colors.surface, borderRadius: TOKENS.radius.card, border: `2px dashed ${TOKENS.colors.border}`, marginBottom: '60px' }}>
+                <h3 style={{ fontSize: '22px', fontWeight: '900', marginBottom: '12px', color: TOKENS.colors.text }}>💡 רוצה להעמיק בחומר?</h3>
+                <p style={{ color: TOKENS.colors.textSecondary, marginBottom: '32px', fontSize: '16px' }}>הפוך את המבחן הבא למקיף יותר עם שאלות נוספות ב"פרוטוקול הזהב"</p>
+                <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
+                    <button
+                        onClick={() => handleCopyPrompt('MCQ', setMcqCopied)}
+                        style={{ padding: '14px 28px', backgroundColor: mcqCopied ? TOKENS.colors.success : TOKENS.colors.primary, color: 'white', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: '800', cursor: 'pointer', transition: '0.2s' }}
+                    >
+                        {mcqCopied ? '✅ הועתק!' : '+ בקש 5 שאלות MCQ נוספות'}
+                    </button>
+                    <button
+                        onClick={() => handleCopyPrompt('Open', setOpenCopied)}
+                        style={{ padding: '14px 28px', backgroundColor: TOKENS.colors.white, color: openCopied ? TOKENS.colors.success : TOKENS.colors.primary, border: `2px solid ${openCopied ? TOKENS.colors.success : TOKENS.colors.primary}`, borderRadius: '12px', fontSize: '15px', fontWeight: '800', cursor: 'pointer', transition: '0.2s' }}
+                    >
+                        {openCopied ? '✅ הועתק!' : '+ בקש 5 שאלות פתוחות נוספות'}
+                    </button>
+                </div>
             </div>
-            <button onClick={onRestart} style={{ padding: '18px 64px', backgroundColor: TOKENS.colors.primary, color: 'white', border: 'none', borderRadius: TOKENS.radius.btn, fontWeight: '900', fontSize: '18px', cursor: 'pointer', boxShadow: TOKENS.shadows.md }}>חזרה למסך הבית</button>
         </div>
     );
 }
@@ -675,32 +710,60 @@ function ExamSetupScreen({ onStartExam, onCancel }) {
 // ============================================================
 // COMPONENT: PromptArchitectView
 // ============================================================
+const DIFFICULTY_LEVELS = [
+    { id: 'easy', label: 'קלה', desc: 'הבנה בסיסית', promptKey: 'Basic Concept Understanding' },
+    { id: 'medium', label: 'בינונית', desc: 'חיזוק היסודות', promptKey: 'Intermediate Foundation' },
+    { id: 'hard', label: 'קשה', desc: 'אתגר אקדמי', promptKey: 'High Academic Challenge' },
+    { id: 'vhard', label: 'קשה מאוד', desc: 'התעללות מלאה', promptKey: 'Extremely Challenging (Abuse Protocol)' },
+];
+
+// ============================================================
+// COMPONENT: PromptArchitectView
+// ============================================================
 function PromptArchitectView({ onSuccess }) {
     const [subject, setSubject] = useState('');
     const [count, setCount] = useState(10);
-    const [difficulty, setDifficulty] = useState('בינוני (Medium)');
-    const [type, setType] = useState('משולב (Mixed)');
+    const [difficulty, setDifficulty] = useState('medium');
+    const [type, setType] = useState('רק פתוחות (Open Questions)');
     const [special, setSpecial] = useState('');
     const [isCopied, setIsCopied] = useState(false);
 
+    const isPhysics = (subject || '').toLowerCase().includes('פיזיקה') || (subject || '').toLowerCase().includes('physics') || (subject || '').toLowerCase().includes('חשמל') || (subject || '').toLowerCase().includes('גאוס') || (subject || '').toLowerCase().includes('מגנטיות');
+    const diagramInstruction = isPhysics
+        ? 'דיאגרמות: עבור מעגלים סטנדרטיים השתמש ב-python_drawer עם schemdraw. עבור גאומטריה, סימטריה, משטחי גאוס, מבנים כדוריים/גליליים ואזורים מוצללים השתמש ב-python_drawer עם matplotlib.'
+        : 'דיאגרמות: עבור פונקציות, שטחים, גרפים, אזורים מוצללים ושדות כיוונים השתמש ב-python_drawer עם matplotlib ו-numpy.';
+
+    const selectedDifficulty = DIFFICULTY_LEVELS.find(d => d.id === difficulty) || DIFFICULTY_LEVELS[1];
+
     const generatedPrompt = `נושא: ${subject || '[בחר נושא]'}
 כמות שאלות: ${count}
-רמת קושי: ${difficulty}
+רמת קושי (ערך יחיד בלבד — אין לפרש כטווח): ${selectedDifficulty.promptKey}
 סוג שאלות: ${type}
 ${special ? `\nדגשים נוספים: ${special}` : ''}
 
-===== פרוטוקול חובה =====
-• עקוב אחר רצף הפלט של ה-System Prompt: 1. <scratchpad> לחשיבה ואימות מתמטי → 2. בלוק ${'```'}json עם המערך הסופי.
-• אל תדלג על ה-scratchpad — הוא נדרש לאימות מתמטי.
-• ה-JSON חייב להיות מערך תקין של אובייקטים ([...]) — ללא טקסט לפני או אחרי.
+===== פרוטוקול זהב (Golden Protocol) =====
+1. סדר הפלט: הפלט הסופי חייב להיות אך ורק בלוק קוד json יחיד המכיל מערך JSON תקין, ישירות להדבקה ב-Exam Viewer. את כל הפתרון, הבדיקה והחשיבה בצע באופן פרטי לפני הפלט.
+2. LaTeX: כל backslash ב-LaTeX חייב להיות DOUBLE-ESCAPED (חובה: \\\\frac, \\\\sqrt, \\\\vec, \\\\rho).
+3. מגן RTL: כל מספר, יחידת מידה או ביטוי מתמטי בתוך הטקסט (השאלה והתשובות) חייב להיות עטוף ב-$ ... $ (למשל: $5 [C]$, $12 [V]$, $x^2$). זה קריטי כדי למנוע היפוך סדר בטקסט RTL.
+4. ${diagramInstruction}
+5. מבנה JSON:
+   - type חייב להיות בדיוק "multiple-choice" או "open-ended".
+   - שאלות multiple-choice: options חייב להכיל בדיוק 4 מחרוזות; correctAnswer חייב להיות מספר שלם (index 0-3).
+   - שאלות open-ended: options חייב להיות []; correctAnswer חייב להיות null.
+   - השתמש ב-python_drawer כשדה עליון בלבד; אין להשתמש ב-diagram מקונן.
+   - בשאלות פתוחות: העדף ניסוח רב-סעיפי מפורש כמו א. / ב. / ג.; השתמש ב-<br><br> רק כשצריך; אל תשתמש ב-<hr> בתוך הטקסט.
+   - DRY: בשדה solution — תשובה סופית בלבד.
+   - explanation: הסבר קצר של הפתרון — שדה חובה.
+6. python_drawer: הערך הסופי המוחזר חייב להיות מחרוזת UTF-8 של SVG תקין, המתחילה ב-<svg או בהצהרת XML ואחריה <svg. אין להדפיס טקסט debug, אין להשתמש ב-print(...) כשלב סופי, ואין להחזיר bytes.
+7. עבור matplotlib, סיים בתבנית השקולה ל:
+   - import io
+   - buf = io.BytesIO()
+   - fig.savefig(buf, format='svg', bbox_inches='tight', transparent=True)
+   - plt.close(fig)
+   - buf.getvalue().decode('utf-8')
+8. ללא קיבוץ/ערבוב: אל תקבץ שאלות לפי סוג — סדר מעורב בלבד.
 
-===== כלל הזהב של LaTeX =====
-⚠️ קריטי: כל backslash ב-LaTeX חייב להיות DOUBLE-ESCAPED.
-דוגמאות: \\\\frac, \\\\sqrt, \\\\vec, \\\\Delta, \\\\text
-זה בלתי-ניתן-למשא-ומתן עבור בטיחות פענוח JSON.
-
-===== כלל DRY לשאלות פתוחות =====
-עבור שאלות מסוג Open: בשדה "solution" ספק אך ורק את התשובה הסופית (DRY) — ללא חזרה על תהליך הפתרון שכבר מופיע ב-scratchpad.`;
+המטרה: רמה אקדמית גבוהה ביותר, ללא כפילויות משתנים.`;
 
     const handleCopy = () => {
         navigator.clipboard.writeText(generatedPrompt).then(() => {
@@ -749,10 +812,11 @@ ${special ? `\nדגשים נוספים: ${special}` : ''}
                             onChange={e => setDifficulty(e.target.value)}
                             style={{ width: '100%', padding: '16px', borderRadius: TOKENS.radius.btn, border: `2px solid ${TOKENS.colors.border}`, fontSize: '16px', outline: 'none', backgroundColor: 'white', fontFamily: 'inherit' }}
                         >
-                            <option>קל (Easy)</option>
-                            <option>בינוני (Medium)</option>
-                            <option>קשה (Hard)</option>
-                            <option>מעורב (Mixed)</option>
+                            {DIFFICULTY_LEVELS.map(lvl => (
+                                <option key={lvl.id} value={lvl.id}>
+                                    {lvl.label} — {lvl.desc}
+                                </option>
+                            ))}
                         </select>
                     </div>
                     <div style={{ gridColumn: 'span 2' }}>
@@ -804,6 +868,7 @@ ${special ? `\nדגשים נוספים: ${special}` : ''}
         </div>
     );
 }
+
 
 // ============================================================
 // LAYOUT WRAPPER (defined outside App to prevent remounts)
@@ -888,26 +953,46 @@ function isValidTime(val) {
 }
 
 function buildMoreQuestionsPrompt(subject, count, type) {
-    const typeLabel = type === 'MCQ' ? 'MCQ' : 'פתוחות';
+    const typeLabel = type === 'MCQ' ? 'מרובות בחירה (MCQ)' : 'פתוחות (Open-Ended)';
+    const isPhysics = subject?.toLowerCase().includes('פיזיקה') || subject?.toLowerCase().includes('physics') || subject?.toLowerCase().includes('חשמל') || subject?.toLowerCase().includes('גאוס') || subject?.toLowerCase().includes('מגנטיות');
+    const diagramInstruction = isPhysics
+        ? 'דיאגרמות: עבור מעגלים סטנדרטיים השתמש ב-python_drawer עם schemdraw. עבור גאומטריה, סימטריה, משטחי גאוס, מבנים כדוריים/גליליים ואזורים מוצללים השתמש ב-python_drawer עם matplotlib.'
+        : 'דיאגרמות: עבור פונקציות, שטחים, גרפים, אזורים מוצללים ושדות כיוונים השתמש ב-python_drawer עם matplotlib ו-numpy.';
+
     return `נושא: ${subject}
 כמות שאלות נוספות: ${count}
 סוג: ${typeLabel}
 
-===== פרוטוקול חובה =====
-• עקוב אחר רצף הפלט: 1. <scratchpad> → 2. בלוק ${'```'}json.
-• שמור על אותו Schema בדיוק. ה-JSON חייב להיות מערך תקין ([...]).
+===== פרוטוקול זהב (Golden Protocol) =====
+1. סדר הפלט: הפלט הסופי חייב להיות אך ורק בלוק קוד json יחיד המכיל מערך JSON תקין, ישירות להדבקה ב-Exam Viewer. את כל הפתרון, הבדיקה והחשיבה בצע באופן פרטי לפני הפלט.
+2. LaTeX: כל backslash ב-LaTeX חייב להיות DOUBLE-ESCAPED (חובה: \\\\frac, \\\\sqrt, \\\\vec, \\\\rho).
+3. מגן RTL: כל מספר, יחידת מידה או ביטוי מתמטי בתוך הטקסט (השאלה והתשובות) חייב להיות עטוף ב-$ ... $ (למשל: $5 [C]$, $12 [V]$, $x^2$). זה קריטי כדי למנוע היפוך סדר בטקסט RTL.
+4. ${diagramInstruction}
+5. מבנה JSON:
+   - type חייב להיות בדיוק "multiple-choice" או "open-ended".
+   - שאלות multiple-choice: options חייב להכיל בדיוק 4 מחרוזות; correctAnswer חייב להיות מספר שלם (index 0-3).
+   - שאלות open-ended: options חייב להיות []; correctAnswer חייב להיות null.
+   - השתמש ב-python_drawer כשדה עליון בלבד; אין להשתמש ב-diagram מקונן.
+   - בשאלות פתוחות: העדף ניסוח רב-סעיפי מפורש כמו א. / ב. / ג.; השתמש ב-<br><br> רק כשצריך; אל תשתמש ב-<hr> בתוך הטקסט.
+   - DRY: בשדה solution — תשובה סופית בלבד.
+   - explanation: הסבר קצר של הפתרון — שדה חובה.
+6. python_drawer: הערך הסופי המוחזר חייב להיות מחרוזת UTF-8 של SVG תקין, המתחילה ב-<svg או בהצהרת XML ואחריה <svg. אין להדפיס טקסט debug, אין להשתמש ב-print(...) כשלב סופי, ואין להחזיר bytes.
+7. עבור matplotlib, סיים בתבנית השקולה ל:
+   - import io
+   - buf = io.BytesIO()
+   - fig.savefig(buf, format='svg', bbox_inches='tight', transparent=True)
+   - plt.close(fig)
+   - buf.getvalue().decode('utf-8')
+8. ללא קיבוץ/ערבוב: אל תקבץ שאלות לפי סוג — סדר מעורב בלבד.
 
-===== כלל הזהב של LaTeX =====
-⚠️ כל backslash ב-LaTeX חייב להיות DOUBLE-ESCAPED (\\\\frac, \\\\sqrt, \\\\vec).
-
-===== DRY =====
-שאלות פתוחות: בשדה "solution" — תשובה סופית בלבד, ללא חזרה על הפתרון.`;
+המטרה: רמה אקדמית גבוהה ביותר, ללא כפילויות משתנים.`;
 }
 
 // ============================================================
 // MAIN APP COMPONENT
 // ============================================================
 export default function App() {
+    const { pyodide, status: pyodideStatus, error: pyodideError, init: initPyodide } = usePyodide();
     const [theme, setTheme] = useState(() => localStorage.getItem('bt-theme') || 'light');
     const [preset, setPreset] = useState(() => localStorage.getItem('bt-preset') || 'pro');
     const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
@@ -922,6 +1007,7 @@ export default function App() {
     const [isFinished, setIsFinished] = useState(false);
     const [examTimeLeft, setExamTimeLeft] = useState(null);
     const [expandedItems, setExpandedItems] = useState({});
+    const [displayMode, setDisplayMode] = useState('scroll');
 
 
     useEffect(() => {
@@ -933,6 +1019,29 @@ export default function App() {
         document.documentElement.setAttribute('data-preset', preset);
         localStorage.setItem('bt-preset', preset);
     }, [preset]);
+
+    // Boot Pyodide immediately on page load
+    useEffect(() => {
+        const s = document.getElementById('pyodide-cdn');
+        if (!s) {
+            const script = document.createElement('script');
+            script.id = 'pyodide-cdn';
+            script.src = 'https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js';
+            script.onload = () => initPyodide();
+            script.onerror = () => console.error('[TestBuilder] Failed to load Pyodide CDN script');
+            document.head.appendChild(script);
+        } else if (typeof window.loadPyodide === 'function') {
+            initPyodide();
+        } else {
+            const check = setInterval(() => {
+                if (typeof window.loadPyodide === 'function') {
+                    clearInterval(check);
+                    initPyodide();
+                }
+            }, 50);
+            setTimeout(() => clearInterval(check), 10000);
+        }
+    }, [initPyodide]);
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
@@ -971,7 +1080,7 @@ export default function App() {
                 return;
             }
             setDynamicQuestions(data);
-            setMode('welcome');
+            setMode('viewer');
             const newEntry = {
                 id: Date.now(),
                 title: data[0]?.subject || 'מבחן חדש',
@@ -989,7 +1098,7 @@ export default function App() {
 
     const handleLoadFromHistory = (entry) => {
         setDynamicQuestions(entry.questions);
-        setMode('welcome');
+        setMode('viewer');
         setIsHistoryModalOpen(false);
     };
 
@@ -1063,6 +1172,11 @@ export default function App() {
 
     const examTitle = dynamicQuestions[0]?.subject || 'Universal Exam Builder';
 
+    const handleCopyBulkPrompt = (type) => {
+        const prompt = buildMoreQuestionsPrompt(examTitle || 'המבחן', 5, type);
+        navigator.clipboard.writeText(prompt);
+    };
+
     const layoutProps = {
         mode, examTitle, setMode,
         isHistoryModalOpen, setIsHistoryModalOpen,
@@ -1079,7 +1193,15 @@ export default function App() {
     if (mode === 'viewer') {
         return (
             <Layout {...layoutProps}>
-                <ExamViewer sharedData={dynamicQuestions.length > 0 ? dynamicQuestions : null} />
+                <ExamViewer
+                    sharedData={dynamicQuestions.length > 0 ? dynamicQuestions : null}
+                    pyodide={pyodide}
+                    pyodideStatus={pyodideStatus}
+                    pyodideError={pyodideError}
+                    displayMode={displayMode}
+                    setDisplayMode={setDisplayMode}
+                    onCopyBulkPrompt={handleCopyBulkPrompt}
+                />
             </Layout>
         );
     }
@@ -1103,7 +1225,7 @@ export default function App() {
                         <h2 style={{ fontSize: '36px', fontWeight: '900', marginBottom: '12px', letterSpacing: '-0.03em' }}>{examTitle}</h2>
                         <p style={{ color: TOKENS.colors.textSecondary, marginBottom: '48px', fontSize: '18px' }}>{dynamicQuestions.length} שאלות מוכנות לתרגול</p>
                         <div style={{ display: 'flex', gap: '24px', justifyContent: 'center' }}>
-                            <button onClick={() => { setMode('practice'); setCurrentIdx(0); setUserAnswers({}); setIsFinished(false); }} style={{ padding: '24px 64px', backgroundColor: TOKENS.colors.primary, color: 'white', border: 'none', borderRadius: TOKENS.radius.card, fontSize: '20px', fontWeight: '900', cursor: 'pointer', boxShadow: TOKENS.shadows.md, display: 'flex', alignItems: 'center', gap: '12px' }}>📖 מצב למידה</button>
+                            <button onClick={() => { setMode('viewer'); setCurrentIdx(0); setUserAnswers({}); setIsFinished(false); }} style={{ padding: '24px 64px', backgroundColor: TOKENS.colors.primary, color: 'white', border: 'none', borderRadius: TOKENS.radius.card, fontSize: '20px', fontWeight: '900', cursor: 'pointer', boxShadow: TOKENS.shadows.md, display: 'flex', alignItems: 'center', gap: '12px' }}>📖 מצב למידה</button>
                             <button onClick={() => setMode('exam-setup')} style={{ padding: '24px 64px', backgroundColor: TOKENS.colors.white, color: TOKENS.colors.primary, border: `3px solid ${TOKENS.colors.primary}`, borderRadius: TOKENS.radius.card, fontSize: '20px', fontWeight: '900', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px' }}>⏱️ מצב בחינה</button>
                         </div>
                         <ShareExamButton examData={dynamicQuestions} />

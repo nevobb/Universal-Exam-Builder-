@@ -23,6 +23,10 @@ export default function DiagramViewer({ script, pyodide, status }) {
 
     let cancelled = false;
 
+    // Hard type guard — reject anything that isn't a clean string.
+    // String() coercion was silently converting JS objects to "[object Object]".
+    if (typeof script !== 'string' || !script.trim()) return;
+
     prevScript.current = script;
     setRunning(true);
     setSvg(null);
