@@ -4,6 +4,7 @@ import LZString from 'lz-string';
 import ExamViewer from './src/viewer/ExamViewer.jsx';
 import ShareExamButton from './src/components/ShareExamButton';
 import { usePyodide } from './src/viewer/usePyodide.js';
+import { isValidQuestionArray, isValidTime } from './src/utils/validation.js';
 
 import './theme.css';
 
@@ -1007,18 +1008,6 @@ function normalizeSharedPayload(payload) {
     };
 }
 
-function isValidQuestionArray(data) {
-    return (
-        Array.isArray(data) &&
-        data.length > 0 &&
-        ['id', 'type', 'question', 'solution'].every((k) => k in data[0])
-    );
-}
-
-function isValidTime(val) {
-    const n = Number(val);
-    return Number.isInteger(n) && n >= 1 && n <= 300;
-}
 
 function buildMoreQuestionsPrompt(subject, count, type) {
     const typeLabel = type === 'MCQ' ? 'מרובות בחירה (MCQ)' : 'פתוחות (Open-Ended)';
