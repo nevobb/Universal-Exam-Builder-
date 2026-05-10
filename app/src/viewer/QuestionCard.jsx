@@ -156,11 +156,22 @@ function normalizeQuestion(q) {
     if (typeof rawAnswer === 'number') {
       resolvedCorrect = options[rawAnswer]?.id || String(rawAnswer + 1);
     } else if (typeof rawAnswer === 'string') {
-      if (options.some(o => o.id === rawAnswer)) {
+      let foundByTextId = null;
+      let foundById = false;
+      for (let i = 0; i < options.length; i++) {
+        const o = options[i];
+        if (o.id === rawAnswer) {
+          foundById = true;
+          break;
+        }
+        if (foundByTextId === null && o.text === rawAnswer) {
+          foundByTextId = o.id;
+        }
+      }
+      if (foundById) {
         resolvedCorrect = rawAnswer;
       } else {
-        const found = options.find(o => o.text === rawAnswer);
-        resolvedCorrect = found ? found.id : rawAnswer;
+        resolvedCorrect = foundByTextId !== null ? foundByTextId : rawAnswer;
       }
     }
   }
