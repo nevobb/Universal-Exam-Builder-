@@ -40,11 +40,18 @@ const DIFFICULTY_COLORS = {
 const BLOCK_HTML_TAG_RE = /<(?:hr|div|p|ul|ol|li|table|blockquote|h[1-6])\b/i;
 
 function sanitizeHtmlFragment(content) {
-  const htmlWithBreaks = content.replace(/\n/g, '<br />');
   if (typeof window !== 'undefined' && window.DOMPurify) {
+    const htmlWithBreaks = content.replace(/\n/g, '<br />');
     return window.DOMPurify.sanitize(htmlWithBreaks, { USE_PROFILES: { html: true } });
   }
-  return htmlWithBreaks;
+  // Fallback to text-only (escaping HTML) while preserving line breaks
+  return String(content || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+    .replace(/\n/g, '<br />');
 }
 
 /**
